@@ -1,7 +1,145 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 1 here
-	</body>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <style>
+        body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+            /* color: #121212; */
+            color: rgb(55, 53, 47);
+            /* cursor: url(https://cdn.custom-cursor.com/db/8356/32/cute-potato-cursor.png), default !important;
+            cursor: url(https://cdn.custom-cursor.com/db/8355/32/cute-potato-pointer.png), pointer !important; */
+        }
+
+        figcaption {
+            margin-right: 7vw;
+        }
+
+        #desc p{
+          font-size: 12px;
+          text-align: center;
+          padding-right: 20px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        table {
+            margin-left: 3vw;
+        }
+
+        div.padded {
+            padding-top: 0px;
+            padding-right: 100px;
+            padding-bottom: 0.25in;
+            padding-left: 100px;
+        }
+
+        .bold-italic {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+        .code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+        .serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+        .mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+    </style>
+    <title>Clara | CS 180 Project 1</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
+</head>
+<body>
+    <div align="center" style="margin:0; padding:0; display: flex;">
+      <!-- <img src="imgs/out_exo.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="task1 summary" />
+        <img src="imgs/out_exe.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="task1 summary" />
+        <img src="imgs/out_exp.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="microfacet bunny in env" /> -->
+    </div>
+
+    <article class="sans">
+
+        <br />
+        <h1 align="middle">CS180: Introduction to Computer Vision & Computation Photography</h1>
+        <h1 align="middle">Project 1</h1>
+        <h2 align="middle" class="bold-italic">Images of the Russian Empire:
+            Colorizing the Prokudin-Gorskii photo collection</h3>
+        <h3 align="middle">Clara Hung</h2>
+
+        <h2 align="middle">Project Overview</h2>
+        <p>Sergei Mikhailovich Prokudin-Gorskii (1863-1944), a Russian photographer, was a pioneer in color photography and much of his work documented the Russian Empire. His is idea was a precursor to our modern-day RGB color model. He took three black and white photographs of the same scene on glass-plates, each with a different color filter (Red, Green, and Blue). To recover the color image, each of the three, filtered negatives were projected onto the same screen through their corresponding color filters. Due to limitations of the equipment at the time,the images were not perfectly aligned yet still impressive to the population, who had only known of black and white photographs. </p>
+
+        <p>Using modern image-processing techniques, we can do better! The goal of this project is to take digitized versions of the original glass plates and utilize our digital image-processing toolkit to combine and align the filtered images into a full color photo with minimal artifacts.</p>
+        <hr />
+
+        <h2 align="middle">0. the most naive approach</h2>
+        <p>Perhaps the most naive approach to colorizing the Prokudin-Gorskii photo collection is to simply stack the three images on top of each other. This is a simple and quick way to get a color image. First, we are given a single <code>.tiff</code> image with all three color channels stacked on top of each other in BGR order. The key assumption here is that each color channel is the same dimension, so we can split the stacked image into three separate images. We then stack each split color channel on top of each other to get a color image. However, this approach will still lend itself to color artifacts since the images are not perfectly aligned with each other. This was a result of the original photography process. In general, the equipment at the time didn't allow for simultaneous captures of each color channel with the same visual perspective. Whether it was beamsplitters, three stacked cameras, or sequential exposures, real-life imaging conditions made capturing mis-aligned images common.</p>
+
+        <p>INSERT PHOTOS</p>
+
+        <hr />
+        <h2 align="middle">1. naive approach</h2>
+        <p>Now, the naive approach is to do what the project spec tells you to do :p. To improve the alignment of each color channel, we first <b>exhaustively search</b> over a small window of possible displacements _______, score each displacement with an image matching metric, then take the displacement with the best score. Our reason for searching over a small window of displacements is due to the assumption that each color channel was captured under similar imaging conditions with some small delta in perspective. Thus, we're essentially manually searching for a Homography transform between the images. In this case, we use the Blue channel as our reference.
+        
+        For this approach, I used the <b>Normalized Cross-Correlation (NCC)</b>, which is just a dot product between the two normalized image vectors: \( \frac{\text{Image1}}{\| \text{Image1} \|} \cdot \frac{\text{Image2}}{\| \text{Image2} \|} \). I found that first center-cropping the images down to 90% of the original image size lead to better NCC evaluation as edge effects would not be calculated into the coefficients.</p>
+
+        <p>COMPARE CROP/NO CROP; INSERT PHOTOS</p>
+
+        <hr />
+        <h2 align="middle">2. fourier, baby!</h2>
+
+        <p>One of the limitations of the previous method is that, for extremely large images, the runtime is SLOW! As computer scientists, we love optimization and want to reduce the runtime. Thus, could we take advantage of intrinsic properties of images to reduce our computation?</p>
+        
+        <p>Images are naturally a type of information easily expressed in the frequency space. A dense image in the time-domain is sparse in frequency-domain. Recall that our goal is to estimate the relative offset between different color channels in the time-domain. One property that is useful is the time-shifting property of Fourier transforms, which states that a shift in time is a phase-delay in frequency. </p>
+
+        <p>\[
+            \mathcal{F}\{f(t - t_0)\} = F(\omega) e^{-j \omega t_0}
+            \]</p>
+
+        <p>Additonally, we know that the Fourier transform of a delta function is the complex exponential:</p>
+
+        <p>\[
+            \mathcal{F}^{-1}\{1\} = \delta(t)
+            \]</p>
+            
+        <p>Thus, we can use the following procedure to identify the shifts in time between two images. This procedure follows that listed in the <a href="https://en.wikipedia.org/wiki/Phase_correlation#:~:text=Phase%20correlation%20is%20an%20approach,calculated%20by%20fast%20Fourier%20transforms.">Wikipedia Page for Phase Correlation</a>. First, we take the 2D Discrete Fourier Transform (DFT) of the images. Then, we calculate the normalized cross-power spectrum (NCPS) of the two DFTs. The result of the NCPS, which is proved in the Wikipedia page, is just the 2D phase-shift between the two images, i.e. complex exponentials. Knowing that the iDFT of a complex exponential is a shifted delta, by computing the iDFT of the NCPS, we will obtain the 2D shifts between the two images in time. Not only does this allow us to obtain the exact shifts between color channels, we also save on compute because doing DFT/iDFTs is much faster than computing NCC since we can use FFT. </p>
+
+        <p>INSERT PHOTOS</p>
+
+        <p>Shoutout to my DSP bestie Gopala for drilling this in our heads.</p>
+
+        <hr />
+        <h2 align="middle">3. pyramid scheme</h2>
+        <p>Alas, despite my Fourier method being both speedy and precise, the project spec expects us to also complete image alignment using a pyramid scheme. The idea behind this is as follows: align the images at multiple resolutions, starting from the coarsest representation to the finest representation. Natural images have more low frequency components than high frequency components. Downsampling an image reduces its sampling rate and its size. Thus, a downsampled image still captures most of the image's low frequencies while also reducing algorithm runtime. This means that, when we perform our exhaustive search in part (1), we'd ideally like to exhaustively search over a smaller image space. Once we've narrowed down the "ballpark" shifts, we can slowly upsample, or increase our resolution, to fine-tune our shift for higher frequency information.</p>
+
+        <p>The general implementation becomes a recursive process. For each level of the image pyramid, starting from the bottom of the pyramid, which is the finest representation, we first, apply an anti-aliasing low pass filter (in this case, a Gaussian smoothing filter), then downsample the image by a factor of 2. We continue filtering then downsampling until we reach our desired depth for the top of the pyramid (coarsest representation). For the coarsest representation, we perform an exhaustive search using NCC to find the ballpark displacements. Then, for each decreasing (upsampled) level, we perform NCC on smaller search areas. In our case, since we only downsample by two each layer, the search area only needs to be (-2, 2) pixels.</p>
+
+        <p>At first, completing the image pyramid using the NCC coefficient did not produce images as accurate as the phase correlation method. Thus, I changed my comparison metric to phase correlation instead.</p>
+
+        <p>INSERT PHOTOS</p>
+
+        <hr />
+        <h2 align="middle">4. the nice-to-haves</h2>
+        <h3 align="middle">4.1. auto-contrasting</h3>
+        <p>Often times, perceived image quality can be improved by rescaling pixel intensities. The most basic rescaling is to 0-1, where the smallest (darkest) pixel value is 0 and the largest (brightest) pixe value is 1. However, <a href="https://en.wikipedia.org/wiki/Histogram_equalization">histogram equalization</a> is also another method that evens out the intensity histogram of an image, and generally increases the global contrast of an image. For this, I used scikit-image's <code>exposure.equalize_hist</code> and <code>exposure.equalize_adapthist</code> methods. The former returns the conventional histogram equalization, where equalization is applied to each RGB color component; however, this may produce unnatural looking images as the color balance as the relative distribution of each color channel may change. The latter uses an algorithm for local contrast enhancement. It firsts converts the image to an HSV (Hue, Saturation, and Value) color space so it can perform the Contrast Limited Adaptive Histogram Equalization (CLAHE) algorithm on the luminance (V) channel, then converts the image back to RGB space. In my opinion, the latter produces the most natural looking images, and improves contrast in regions of the image that have uneven brightnesses.</p>
+
+        <p>INSERT PHOTOS</p>
+
+        <div class="padded">
+
+        </div>
+
+    </article>
+
+</body>
 </html>
