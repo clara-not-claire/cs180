@@ -49,13 +49,38 @@
             font-style: italic;
         }
 
+        .image-row {
+            display: flex;
+            justify-content: space-around; /* Distribute space between images */
+            align-items: center; /* Align images vertically in the center */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 10px; /* Space between images */
+        }
+        .image-container {
+            text-align: center; /* Center the text below images */
+            flex: 1; /* Allows containers to grow and shrink equally */
+            max-width: 100%; /* Ensures container does not exceed available width */
+            box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+        }
+        .image-container img {
+            max-width: 100%; /* Ensures images are responsive */
+            height: auto; /* Maintains aspect ratio */
+            display: block; /* Removes whitespace below images */
+        }
+        .caption {
+            margin-top: 5px; /* Space between image and caption */
+            font-size: 14px; /* Font size for the caption */
+            color: #555; /* Color for the caption text */
+        }
+
         .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
         .code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
         .serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
         .mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
     </style>
     <title>Clara | CS 180 Project 1</title>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="content-type" name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
@@ -81,22 +106,19 @@
 
         <p>Using modern image-processing techniques, we can do better! The goal of this project is to take digitized versions of the original glass plates and utilize our digital image-processing toolkit to combine and align the filtered images into a full color photo with minimal artifacts.</p>
         <hr />
-
-        <h2 align="middle">0. the most naive approach</h2>
+        
+        <h2 align="middle">Alignment</h2>
+        <h3 align="middle">0. the most naive approach</h2>
         <p>Perhaps the most naive approach to colorizing the Prokudin-Gorskii photo collection is to simply stack the three images on top of each other. This is a simple and quick way to get a color image. First, we are given a single <code>.tiff</code> image with all three color channels stacked on top of each other in BGR order. The key assumption here is that each color channel is the same dimension, so we can split the stacked image into three separate images. We then stack each split color channel on top of each other to get a color image. However, this approach will still lend itself to color artifacts since the images are not perfectly aligned with each other. This was a result of the original photography process. In general, the equipment at the time didn't allow for simultaneous captures of each color channel with the same visual perspective. Whether it was beamsplitters, three stacked cameras, or sequential exposures, real-life imaging conditions made capturing mis-aligned images common.</p>
 
-        <p>INSERT PHOTOS</p>
-
         <hr />
-        <h2 align="middle">1. naive approach</h2>
-        <p>Now, the naive approach is to do what the project spec tells you to do :p. To improve the alignment of each color channel, we first <b>exhaustively search</b> over a small window of possible displacements _______, score each displacement with an image matching metric, then take the displacement with the best score. Our reason for searching over a small window of displacements is due to the assumption that each color channel was captured under similar imaging conditions with some small delta in perspective. Thus, we're essentially manually searching for a Homography transform between the images. In this case, we use the Blue channel as our reference.
+        <h3 align="middle">1. naive approach</h2>
+        <p>Now, the naive approach is to do what the project spec tells you to do :p. To improve the alignment of each color channel, we first <b>exhaustively search</b> over a small window of possible displacements (-15, 16), score each displacement with an image matching metric, then take the displacement with the best score. Our reason for searching over a small window of displacements is due to the assumption that each color channel was captured under similar imaging conditions with some small delta in perspective. Thus, we're essentially manually searching for a Homography transform between the images. In this case, we use the Blue channel as our reference.
         
         For this approach, I used the <b>Normalized Cross-Correlation (NCC)</b>, which is just a dot product between the two normalized image vectors: \( \frac{\text{Image1}}{\| \text{Image1} \|} \cdot \frac{\text{Image2}}{\| \text{Image2} \|} \). I found that first center-cropping the images down to 90% of the original image size lead to better NCC evaluation as edge effects would not be calculated into the coefficients.</p>
 
-        <p>COMPARE CROP/NO CROP; INSERT PHOTOS</p>
-
         <hr />
-        <h2 align="middle">2. fourier, baby!</h2>
+        <h4 align="middle">2. fourier, baby!</h2>
 
         <p>One of the limitations of the previous method is that, for extremely large images, the runtime is SLOW! As computer scientists, we love optimization and want to reduce the runtime. Thus, could we take advantage of intrinsic properties of images to reduce our computation?</p>
         
@@ -114,26 +136,133 @@
             
         <p>Thus, we can use the following procedure to identify the shifts in time between two images. This procedure follows that listed in the <a href="https://en.wikipedia.org/wiki/Phase_correlation#:~:text=Phase%20correlation%20is%20an%20approach,calculated%20by%20fast%20Fourier%20transforms.">Wikipedia Page for Phase Correlation</a>. First, we take the 2D Discrete Fourier Transform (DFT) of the images. Then, we calculate the normalized cross-power spectrum (NCPS) of the two DFTs. The result of the NCPS, which is proved in the Wikipedia page, is just the 2D phase-shift between the two images, i.e. complex exponentials. Knowing that the iDFT of a complex exponential is a shifted delta, by computing the iDFT of the NCPS, we will obtain the 2D shifts between the two images in time. Not only does this allow us to obtain the exact shifts between color channels, we also save on compute because doing DFT/iDFTs is much faster than computing NCC since we can use FFT. </p>
 
-        <p>INSERT PHOTOS</p>
-
         <p>Shoutout to my DSP bestie Gopala for drilling this in our heads.</p>
 
+
         <hr />
-        <h2 align="middle">3. pyramid scheme</h2>
+        <h3 align="middle">3. comparison</h2>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="output/emir/processed_emir.png" class="figure-img img-fluid rounded" alt="Emir Ref">
+                <div class="caption">Reference Image <br /> No Alignment</div>
+            </div>
+            <div class="image-container">
+                <img src="output/emir/ncc_processed_emir.png" class="figure-img img-fluid roun4ded" alt="Emir NCC">
+                <div class="caption">NCC <br/> Displacement: G (14, 14); R (14, 14)</div>
+            </div>
+            <div class="image-container">
+                <img src="output/emir/phase_processed_emir.png" class="figure-img img-fluid roun4ded" alt="Emir Phase">
+                <div class="caption">Phase <br/> Displacement: G (49, 24); R (106, 41)</div>
+            </div>
+        </div>
+
+        <hr />
+        <h3 align="middle">4. pyramid scheme</h2>
         <p>Alas, despite my Fourier method being both speedy and precise, the project spec expects us to also complete image alignment using a pyramid scheme. The idea behind this is as follows: align the images at multiple resolutions, starting from the coarsest representation to the finest representation. Natural images have more low frequency components than high frequency components. Downsampling an image reduces its sampling rate and its size. Thus, a downsampled image still captures most of the image's low frequencies while also reducing algorithm runtime. This means that, when we perform our exhaustive search in part (1), we'd ideally like to exhaustively search over a smaller image space. Once we've narrowed down the "ballpark" shifts, we can slowly upsample, or increase our resolution, to fine-tune our shift for higher frequency information.</p>
 
         <p>The general implementation becomes a recursive process. For each level of the image pyramid, starting from the bottom of the pyramid, which is the finest representation, we first, apply an anti-aliasing low pass filter (in this case, a Gaussian smoothing filter), then downsample the image by a factor of 2. We continue filtering then downsampling until we reach our desired depth for the top of the pyramid (coarsest representation). For the coarsest representation, we perform an exhaustive search using NCC to find the ballpark displacements. Then, for each decreasing (upsampled) level, we perform NCC on smaller search areas. In our case, since we only downsample by two each layer, the search area only needs to be (-2, 2) pixels.</p>
 
         <p>At first, completing the image pyramid using the NCC coefficient did not produce images as accurate as the phase correlation method. Thus, I changed my comparison metric to phase correlation instead.</p>
 
-        <p>INSERT PHOTOS</p>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="output/processed_lady.png" class="figure-img img-fluid rounded" alt="Lady Ref">
+                <div class="caption">Reference Image <br /> No Alignment</div>
+            </div>
+            <div class="image-container">
+                <img src="output/processed_multi_lady.png" class="figure-img img-fluid roun4ded" alt="Lady Multiscale">
+                <div class="caption">Image Pyramid <br/> G (57, 9); R (120, 13)</div>
+            </div>
+        </div>
 
         <hr />
         <h2 align="middle">4. the nice-to-haves</h2>
         <h3 align="middle">4.1. auto-contrasting</h3>
         <p>Often times, perceived image quality can be improved by rescaling pixel intensities. The most basic rescaling is to 0-1, where the smallest (darkest) pixel value is 0 and the largest (brightest) pixe value is 1. However, <a href="https://en.wikipedia.org/wiki/Histogram_equalization">histogram equalization</a> is also another method that evens out the intensity histogram of an image, and generally increases the global contrast of an image. For this, I used scikit-image's <code>exposure.equalize_hist</code> and <code>exposure.equalize_adapthist</code> methods. The former returns the conventional histogram equalization, where equalization is applied to each RGB color component; however, this may produce unnatural looking images as the color balance as the relative distribution of each color channel may change. The latter uses an algorithm for local contrast enhancement. It firsts converts the image to an HSV (Hue, Saturation, and Value) color space so it can perform the Contrast Limited Adaptive Histogram Equalization (CLAHE) algorithm on the luminance (V) channel, then converts the image back to RGB space. In my opinion, the latter produces the most natural looking images, and improves contrast in regions of the image that have uneven brightnesses.</p>
 
-        <p>INSERT PHOTOS</p>
+        <div align="middle"><img src="output/contrast.png">
+            <div class="caption">Comparison of different auto contrast mechanisms</div>
+        </div>
+
+        <hr />
+
+        <h2 align="middle">5. results</h2>
+        <p>Final image results processed using a pipeline of Phase Correlation (with image pyramiding for large images), cropping (to remove mismatched edges), and auto-contrasting using adaptive histogram equalization.</p>
+        <div class="container px-5" id="initresults">
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="output/cathedral/cathedral.png" class="figure-img img-fluid rounded" alt="Cathedral Phase">
+                    <div class="caption">Displacement: G (5, 2); R (12, 3)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/church/church.png" class="figure-img img-fluid rounded" alt="Church Phase">
+                    <div class="caption">Displacement: G (25, 3); R (58, -4)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/train/train.png" class="figure-img img-fluid rounded" alt="Train Phase">
+                    <div class="caption">Displacement: G (38, -41); R (85, 28)</div>
+                </div>
+            </div>
+
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="output/icon/icon.png" class="figure-img img-fluid rounded" alt="Icon Phase">
+                    <div class="caption">Displacement: G (39, 16); R (88, 23)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/lady/lady.png" class="figure-img img-fluid rounded" alt="Lady Phase">
+                    <div class="caption">Displacement: G (69, 9); R (120, 13)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/melons/melons.png" class="figure-img img-fluid rounded" alt="Melons Phase">
+                    <div class="caption">Displacement: G (79, 8); R (176, 14)</div>
+                </div>
+            </div>
+            
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="output/monastery/monastery.png" class="figure-img img-fluid rounded" alt="Monastery Phase">
+                    <div class="caption">Displacement: G (338, 2); R (3, 2)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/onion_church/onion_church.png" class="figure-img img-fluid rounded" alt="Onion Church Phase">
+                    <div class="caption">Displacement: G (51, 19); R (107, 34)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/sculpture/sculpture.png" class="figure-img img-fluid rounded" alt="Sculpture Phase">
+                    <div class="caption">Displacement: G (33, 11); R (140, 7)</div>
+                </div>
+            </div>
+
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="output/self_portrait/self_portrait.png" class="figure-img img-fluid rounded" alt="Self Portrait Phase">
+                    <div class="caption">Displacement: G (25, 3); R (58, -4)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/three_generations/three_generations.png" class="figure-img img-fluid rounded" alt="Three Generations Phase">
+                    <div class="caption">Displacement: G (14, 14); R (14, 14)</div>
+                </div>
+                <div class="image-container">
+                    <img src="output/tobolsk/tobolsk.png" class="figure-img img-fluid rounded" alt="Tobolsk Phase">
+                    <div class="caption">Displacement: G (49, 24); R (106, 41)</div>
+                </div>
+            </div>
+
+            
+        </div>
+
+        <hr />
+
+        <h2 align="middle">6. references</h2>
+        <ul>
+            <li><a href="https://ocw.mit.edu/courses/res-6-007-signals-and-systems-spring-2011/403577752d3007ed4ea30e8c61cf90d7_MITRES_6_007S11_lec09.pdf">MIT Fourier Transforms Lecture Summary</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Phase_correlation#:">Phase correlation</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Histogram_equalization">Histogram equalization</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Pyramid_(image_processing)">Image processing pyramids</a></li>
+            <li><a href="https://scikit-image.org/docs/stable/api/skimage.exposure.html#module-skimage.exposure">scikit-image's exposure class</a></a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Adaptive_histogram_equalization#CLAHE">Adaptive histogram equalization</a></li>
+        </ul>
 
         <div class="padded">
 
@@ -143,3 +272,103 @@
 
 </body>
 </html>
+
+<!-- <table class="table table-bordered text-center">
+                <tbody>
+                    <tr>
+                        <td colspan=3>
+                            <b>Comparison of naive, NCC, and phase correlation approaches</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <b>Reference</b>
+                        </td>
+                        <td>
+                            <b>NCC</b>
+                        </td>
+                        <td>
+                            <b>Phase Correlation</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/emir/processed_emir.png" class="figure-img img-fluid rounded" alt="Emir Ref">
+                            </figure>
+                        </td>
+
+                        <td>
+                            <figure class="figure">
+                                <img src="output/emir/ncc_processed_emir.png" class="figure-img img-fluid roun4ded" alt="Emir NCC">
+                                <figcaption class="figure-caption">Displacement: G (14, 14); R (14, 14)</figcaption>
+                            </figure>
+                        </td>
+
+                        <td>
+                            <figure class="figure">
+                                <img src="output/emir/phase_processed_emir.png" class="figure-img img-fluid roun4ded" alt="Emir Phase">
+                                <figcaption class="figure-caption">Displacement: G (49, 24); R (106, 41)</figcaption>
+                            </figure>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/icon.jpg" class="figure-img img-fluid rounded" alt="Icon">
+                                <figcaption class="figure-caption">Reconstructed image of an icon.<br/>Displacement: G (41, 17); R (89, 23)</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/lady.jpg" class="figure-img img-fluid rounded" alt="Lady">
+                                <figcaption class="figure-caption">Reconstructed image of an unnamed lady.<br/>Displacement: G (55, 8); R (117, 11)</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/melons.jpg" class="figure-img img-fluid rounded" alt="Melons">
+                                <figcaption class="figure-caption">Reconstructed image of a melon stand.<br/>Displacement: G (82, 11); R (178, 13)</figcaption>
+                            </figure>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/onion_church.jpg" class="figure-img img-fluid rounded" alt="Onion Church">
+                                <figcaption class="figure-caption">Reconstructed image of a church with an onion-shaped roof.<br/>Displacement: G (51, 27); R (108, 36). Runtime: 26.2 sec</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/sculpture.jpg" class="figure-img img-fluid rounded" alt="Sculpture">
+                                <figcaption class="figure-caption">Reconstructed image of a sculpture.<br/>Displacement: G (33, -11); R (140, -27). Runtime: 26.1 sec</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/self_portrait.jpg" class="figure-img img-fluid rounded" alt="Self-Portrait">
+                                <figcaption class="figure-caption">Reconstructed image of Sergei's self-portrait.<br/>Displacement: G (79, 29); R (176, 37). Runtime: 26.3 sec</figcaption>
+                            </figure>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/three_generations.jpg" class="figure-img img-fluid rounded" alt="Three Generations">
+                                <figcaption class="figure-caption">Reconstructed image of a family with three generations.<br/>Displacement: G (53, 14); R (112, 11). Runtime: 25.2 sec</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <figure class="figure">
+                                <img src="output/train.jpg" class="figure-img img-fluid rounded" alt="Train">
+                                <figcaption class="figure-caption">Reconstructed image of a train.<br/>Displacement: G (43, 6); R (87, 32). Runtime: 25.9 sec</figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table> -->
