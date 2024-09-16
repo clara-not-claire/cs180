@@ -105,8 +105,28 @@
         <hr />
         
         <h2 align="middle">Part 1: Fun with Fileters</h2>
-        <h3 align="middle">1.1 Finite Difference Operator/h2>
+        <h3 align="middle">1.1 Finite Difference Operator</h2>
+        <h4>Approach</h4>
+        <p>Finite Difference Operator is a simple filter that approximates the gradient of an image. It is used to detect edges in an image. The filter is defined as follows:</p>
+        
+        <p>$$\begin{bmatrix} -1 & 0 & 1 \end{bmatrix}$$</p>
+        <p>$$\begin{bmatrix} -1 \\ 0 \\ 1 \end{bmatrix}$$</p>
+        <p>$$\begin{bmatrix} -1 & 0 & 1 \\ -1 & 0 & 1 \\ -1 & 0 & 1 \end{bmatrix}$$</p>
 
+        <h4>Results</h4>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="/assets/dx.jpg" alt="Finite Difference Operator in x-direction" />
+                <figcaption class="caption">Finite Difference Operator in x-direction</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="/assets/dy.jpg" alt="Finite Difference Operator in y-direction" />
+                <figcaption class="caption">Finite Difference Operator in y-direction</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="/assets/gradient_magnitude.jpg" alt="Magnitude of Finite Difference Operator" />
+                <figcaption class="caption">Magnitude of Finite Difference Operator</figcaption>
+            </div>
         <hr />
         <h3 align="middle">1.2 Derivative of a Gaussian (DoG) Filter</h2>
         

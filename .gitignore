@@ -1,3 +1,4 @@
 *.DS_Store
 proj1/output/.DS_Store
 .gitignore
+*/output/
