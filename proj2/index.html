@@ -16,9 +16,8 @@
             cursor: url(https://cdn.custom-cursor.com/db/8355/32/cute-potato-pointer.png), pointer !important; */
         }
 
-        figcaption {
-            margin-right: 7vw;
-        }
+        /* figcaption {
+            /* margin-right: 7vw; } */
 
         #desc p{
           font-size: 12px;
@@ -51,16 +50,17 @@
 
         .image-row {
             display: flex;
-            justify-content: space-around; /* Distribute space between images */
+            justify-content: center; /* Distribute space between images */
             align-items: center; /* Align images vertically in the center */
             flex-wrap: wrap; /* Allow wrapping on smaller screens */
             gap: 10px; /* Space between images */
         }
         .image-container {
             text-align: center; /* Center the text below images */
-            flex: 1; /* Allows containers to grow and shrink equally */
+            flex-basis: calc(30% - 20px);  /* Allows containers to grow and shrink equally */
             max-width: 100%; /* Ensures container does not exceed available width */
             box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+
         }
         .image-container img {
             max-width: 100%; /* Ensures images are responsive */
@@ -69,14 +69,16 @@
         }
         .caption {
             margin-top: 5px; /* Space between image and caption */
-            font-size: 14px; /* Font size for the caption */
+            font-size: 12px; /* Font size for the caption */
             color: #555; /* Color for the caption text */
+            text-align: center;
         }
 
         .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
         .code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
         .serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
         .mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+        .bold {font-weight: bold; }
     </style>
     <title>Clara | CS 180 Project 2</title>
     <meta http-equiv="content-type" name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,60 +103,468 @@
         <h3 align="middle">Clara Hung</h2>
 
         <h2 align="middle">Project Overview</h2>
-
+        <p>Project 2 is a big mish-mosh of different sub-projects that explores how to manipulate image frequencies.
+            By the end of the project, we should be able to have some fun with multi-resolution blending!
+        </p>
         <hr />
         
-        <h2 align="middle">Part 1: Fun with Fileters</h2>
+        <h2 align="middle">Part 1: Fun with Filters</h2>
         <h3 align="middle">1.1 Finite Difference Operator</h2>
-        <h4>Approach</h4>
-        <p>Finite Difference Operator is a simple filter that approximates the gradient of an image. It is used to detect edges in an image. The filter is defined as follows:</p>
-        
-        <p>$$\begin{bmatrix} -1 & 0 & 1 \end{bmatrix}$$</p>
-        <p>$$\begin{bmatrix} -1 \\ 0 \\ 1 \end{bmatrix}$$</p>
-        <p>$$\begin{bmatrix} -1 & 0 & 1 \\ -1 & 0 & 1 \\ -1 & 0 & 1 \end{bmatrix}$$</p>
+        <h4 class="bold">Approach</h4>
+        <p>One way to implement an edge-detector, or a high-pass filter (HPF), is to take the derivative of an image. However, how does one take a derivative (a continuous operation) over a discrete space that is an image? Here comes the Finite Difference Operator (FDO) to the rescume! The FDO is a simple filter that approximates the gradient of an image, and we define a FDO in each direction in the image (x, y):</p>
+        <p>$$D_x = \begin{bmatrix} -1 & 1 \end{bmatrix}$$</p>
+        <p>$$D_y = \begin{bmatrix} -1 \\ 1 \end{bmatrix}$$</p>
 
-        <h4>Results</h4>
-        <div class="image-row">
+        <p>To obtain the partial derivative of the image (I) in both the x and y directions, we convolve the image with the FDOs. (Why can't we take a multi-dimensional derivative simultaneously? Beats me -- ask the math department!)</p>
+
+        <p>$$\frac{\partial I}{\partial x} = I \ast D_x$$</p>
+        <p>$$\frac{\partial I}{\partial y} = I \ast D_y$$</p>
+        
+        <p>The magnitude of the gradient can be calculated by taking the square root of the sum of the squares of the partial derivatives: </p>
+
+        <p>$$\text{Gradient Magnitude} = \| \nabla f \| = \sqrt{(\frac{\partial I}{\partial x})^2 + (\frac{\partial I}{\partial y})^2}$$</p>
+        
+        <p>To obtain an edge image, we can binarize the gradient magnitude by choosing a threshold and setting all values <em>below</em> the threshold to be zero and above to be 1. In the images below, I set the threshold to be 0.1, chosen after plotting a histogram of the gradient magnitude's pixel values. Most of the values will be 0 or noise. Notice how, even with the 0.1 threshold, the edge image is still quite noisy! We can still see some specs on the grass, and we don't want that!</p>
+
+        <img src="./assets/grad-mag-hist.png" alt="Pixel Value Histogram" justify-content="center"/>
+
+        <h4 class="bold">Results</h4>
+        <div class="image-row" >
             <div class="image-container">
-                <img src="/assets/dx.jpg" alt="Finite Difference Operator in x-direction" />
+                <img src="./assets/dx.jpg" alt="Finite Difference Operator in x-direction" />
                 <figcaption class="caption">Finite Difference Operator in x-direction</figcaption>
             </div>
             <div class="image-container">
-                <img src="/assets/dy.jpg" alt="Finite Difference Operator in y-direction" />
+                <img src="./assets/dy.jpg" alt="Finite Difference Operator in y-direction" />
                 <figcaption class="caption">Finite Difference Operator in y-direction</figcaption>
             </div>
             <div class="image-container">
-                <img src="/assets/gradient_magnitude.jpg" alt="Magnitude of Finite Difference Operator" />
-                <figcaption class="caption">Magnitude of Finite Difference Operator</figcaption>
+                <img src="./assets/gradient_magnitude.jpg" alt="Magnitude of Finite Difference Operator" />
+                <figcaption class="caption">Gradient Magnitude</figcaption>
             </div>
+            <div class="image-container">
+                <img src="./assets/gradient_magnitude_thresholded.jpg" alt="Magnitude of Finite Difference Operator Thresholded" />
+                <figcaption class="caption">Gradient Magnitude Thresholded</figcaption>
+            </div>
+        </div>
         <hr />
         <h3 align="middle">1.2 Derivative of a Gaussian (DoG) Filter</h2>
+        <p>So, how should we get rid of noise? Since noise is a high-frequency component, let's low-pass filter (LPF) it first with a Gaussian! For this, we can use the associativity and commutivity of the convolution to have two implementations of the same filter: taking the derivative of a gaussian-filtered image is the same as convolving the image with a derivative-of-gaussian (DoG) filter!</p>
+        <p>$$\frac{\partial}{\partial x} (I \ast G) = I \ast (\frac{\partial}{\partial x} G)$$</p>
+
+        <p>For my implementation, I used <code>cv2.getGaussianKernel</code> with <code>kernel_size = 10</code> and <code>sigma=kernel_size/6</code>. This took a little bit of fine-tuning to get right as sometimes, when the kernel size is too small, the DoG doesn't filter properly. Here are some results of the gradient magnitude, normalized to [0, 1]:</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="./assets/grad_mag_g.jpg" alt="Filter -> Derivative" />
+                <figcaption class="caption">Filter -> Derivative</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="./assets/grad_mag_g_binarized.jpg" alt="Filter -> Derivative, Binarized" />
+                <figcaption class="caption">Filter -> Derivative, Binarized</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="./assets/grad_mag_DoG.jpg" alt="Derivative of Gaussian -> Filtered" />
+                <figcaption class="caption">Derivative of Gaussian -> Filtered</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="./assets/grad_mag_DoG_binarized.jpg" alt="Derivative of Gaussian -> Filtered, Binarized" />
+                <figcaption class="caption">DoG -> Filtered, Binarized</figcaption>
+            </div>
+        </div>
+
+        <p>For these images, using the same threshold of 0.1, we can clearly see that the edges are significantly cleaner than the FDO without the LPF. Additionally, there are no longer (or if there are, very few) high frequency componenets on the grassy area. The lines are thicker, but that's likely because the LPF smooths the edges out. When we compare the images from the two methods, it appears that they are nearly identical, sans some intensity differences that may due to implementation and bit-depth inaccuracies. For reference, here are my DoG filters! They look super blurry because they're blown up from a small 10x10 kernel.</p>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="./assets/DoG_x.jpg" alt="DoG in x-direction" width="300px"/>
+                <figcaption class="caption">DoG in x-direction</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="./assets/DoG_y.jpg" alt="DoG in y-direction" width="300px"/>
+                <figcaption class="caption">DoG in y-direction</figcaption>
+            </div>
+        </div>
+    <hr />
+
+    <h2 align="middle">Part 2: Fun with Frequencies</h2>
+    <h3 align="middle">2.1 Image "Sharpening"</h2>
+    <p>Image sharpening is a technique that enhances the edges of an image by accentuating the high-frequency components. One way to do this is to subtract the low-pass filtered image from the original image. This is equivalent to adding the high-pass filtered image to the original image. Mathematically, we define it as follows:</p>
+    <p>
+    $$\text{Sharpened Image} = \text{Original Image} + \alpha(\text{Original Image} - \text{Low-pass Filtered Image})$$</p>
+
+    <p>Where \(\alpha\) is a multiplier that defines how much the image should be sharpened. Below, the \(\sigma, k, \alpha\) values of each image are included next to the sharpened image.</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/taj.jpg" alt="Original Taj" />
+            <figcaption class="caption">Original Taj</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/sharpened_taj.jpg" alt="Sharpened Taj" />
+            <figcaption class="caption">Sharpened Taj: \(\sigma=1, k=3,  \alpha=2\)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/mask_taj.jpg" alt="Taj Details" />
+            <figcaption class="caption">Taj Details</figcaption>
+        </div>
+    </div>
+
+    <p>I took this film photo myself!</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/taipei.jpeg" alt="Original Taipei" />
+            <figcaption class="caption">Original Taipei</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/sharpened_taipei.jpg" alt="Sharpened Taipei" />
+            <figcaption class="caption">Sharpened Taipei: \(\sigma=1, k=3,  \alpha=2\)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/mask_taipei.jpg" alt="Taipei Details" />
+            <figcaption class="caption">Taipei Details</figcaption>
+        </div>
+    </div>
+    
+    <p>For evaluation, let's test a sharp image, blur it, then try to sharpen it again.</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/macarons.jpeg" alt="Original Macarons" />
+            <figcaption class="caption">Original Macarons</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/sharpened_macarons.jpg" alt="Sharpened Macarons" />
+            <figcaption class="caption">Sharpened Macarons: \(\sigma=5, k=30,  \alpha=4\)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/mask_macarons.jpg" alt="Macarons Details" />
+            <figcaption class="caption">Macarons Details</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/blurred_og_macarons.jpg" alt="Blurred Macarons" />
+            <figcaption class="caption">Blurred Macarons: \(\sigma=6, k=20\)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/sharpened_blurredmacarons.jpg" alt="Sharpened Blurred Macarons" />
+            <figcaption class="caption">Blurred Macarons sharpened with low-passed details: \(\sigma=5, k=30,  \alpha=15\)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/blurred_sharp_macarons.jpg" alt="Sharpened Blurred Macaron Details" />
+            <figcaption class="caption">Blurred Macarons sharpened with original details: \(\sigma=5, k=30,  \alpha=15\)</figcaption>
+        </div>
+    </div>
+
+    <p>From the images above, it is clear that when we attempt to sharpen our blurred macarons with its own details, the images become slightly sharper compared to the original blurred macarons, but not by much, whereas when we sharpened the blurred image with details from the original filter, we do get a sharper image back if we turn up the \(\alpha\) factor. This is likely because when we first LPF the macarons to get the blurred image, a lot of the high frequency content is already filtered out. Thus, we cannot add more high frequency content back (remember Babak's core tenant of LTI systems: no new frequencies!!!). However, we can manually add the high frequency content back by using the mask of the original image. This poses an interesting problem for deblurring applications: can we deblur without priors?</p>
+
+
+    <h3 align="middle">2.2 Hybrid Images</h2>
+
+    <p>Next, we can try hybridizing images! For this section, we will superimpose two images together: one that is LPF-ed, leaving only LF components; one that is HPF-ed, leaving only HF components. The idea here is that when we look at the image from far away, our eyes are accustomed to seeing LF content, whereas if we look up close, we are used to seeing HF content. For Derek and Nutmeg, I aligned using the sparkle in their eye. I used a larger gaussian kernel (15) and a larger sigma for greater smoothing (10). I saved these images as grayscale since, when you choose images that have different intensities and color profiles, the hybrid images look a bit wacky. Images worked best when I had a larger kernel, with a greater \(\sigma\( for the HPF and smaller for the LPF. As a side note, I had to make sure my type conversions were correct (clip 0-255,then normalize) for when saving as gray scale, the images must be in uint8.
+    </p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/DerekPicture.jpg" alt="Derek" />
+            <figcaption class="caption">Derek (Low)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/nutmeg.jpg" alt="Nutmeg" />
+            <figcaption class="caption">Nutmeg (High)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/DerekPicture_nutmeg_hybrid_grey.jpg" alt="Hybrid" />
+            <figcaption class="caption">Hybrid</figcaption>
+        </div>
+    </div>
+
+    <p>Here are a couple other I tried! This has great applications for biomimicry!</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/seashell.jpg" alt="Seashell" />
+            <figcaption class="caption">Seashell (Low)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/staircase.jpeg" alt="Spiral Staircase" />
+            <figcaption class="caption">Spiral Staircase (High) </figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/seashell_staircase._hybrid_grey.jpg" alt="Hybrid" />
+            <figcaption class="caption">Hybrid</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/moth.JPG" alt="Seashell" />
+            <figcaption class="caption">Moth (Low)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/owl2.jpg" alt="Spiral Staircase" />
+            <figcaption class="caption">Owl (High) </figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/moth_owl2_hybrid_grey.jpg" alt="Hybrid" />
+            <figcaption class="caption">Hybrid</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/vangogh.jpg" alt="Seashell" />
+            <figcaption class="caption">Van Gogh Self Portrait (Low)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/pearl.jpg" alt="Spiral Staircase" />
+            <figcaption class="caption">The Girl with the Pearl Earring (High) </figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/vangogh_pearl_hybrid_grey.jpg" alt="Hybrid" />
+            <figcaption class="caption">Hybrid</figcaption>
+        </div>
+    </div>
+
+    <p>Here's a Fourier analysis of the paintings. The difference in sizing is a result of the alignment. You can notice there are some sidelobes in the Filtered Van Gogh. That may be a result of a windowing operation, perhaps in the alignment, or that our LPF was far too tight. </p>
+
+    <div class="image-row">
+        <div class="image-container" >
+            <img src="./assets/hybrid/vangogh_fft.jpg" alt="Van Gogh FFT" />
+            <figcaption class="caption">Van Gogh FFT</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/vangogh_filtered_FFT.jpg" alt="Pearl FFT" />
+            <figcaption class="caption">LPF-ed Van Gogh FFT</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/pearl_FFT.jpg" alt="Van Gogh FFT"/>
+            <figcaption class="caption">Pearl FFT</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/pearl_filtered_FFT.jpg" alt="Pearl FFT"/>
+            <figcaption class="caption">HPF-ed Pearl FFT</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/vangogh_pearl_hybrid_fourier.jpg" alt="Pearl FFT" />
+            <figcaption class="caption">Hybrid FFT</figcaption>
+        </div>
+    </div>
+
+    <p>Failure cases! Sometimes this hybrid imaging doesn't really work! I think it is because Taylor and Travis don't really have comparable face shapes, and if they do, Travis's beard gets in the way. His mouth is also a bit large, so I don't think the results look nearly as good as the previous ones. In this case, I also think I need to increase the \(\sigma\) of Travis since I think his HF components need to be accentuated. You can see Taylor more clearly than Travis.</p>
+    <div class="image-row">
+        <div class="image-container">
+            <img src="./assets/hybrid/taylor.jpg" alt="Seashell" />
+            <figcaption class="caption">Taylor Swift (Low)</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/travis.jpeg" alt="Spiral Staircase" />
+            <figcaption class="caption">Travis Kelce (High) </figcaption>
+        </div>
+        <div class="image-container">
+            <img src="./assets/hybrid/taylor_travis._hybrid_grey.jpg" alt="Hybrid" />
+            <figcaption class="caption">Taylor and Travis Hybrid</figcaption>
+        </div>
+    </div>
+
+
+    <h2 align="middle">Multi-Resolution Blending and the Oraple Journey</h2>
+    <h3 align="middle">2.3 Gaussian and Laplacian Stacks</h2>
+    <p>Here are the results of my Laplacian stacks with a binary half-half mask for creating the Oraple!
+        Level 0 is the highest frequency layer, Level 2 medium frequencies, and Level 4 the lowest frequency layer! Additionally for the blending, I found that it was helpful to pass my mask through a LPF first to smooth out the sharp transitions. For all of the following blends, my parameters were as follows: \(\text{depth} = 5, \sigma = 16, k = 6\sigma + 1\). Why the formula for the kernel size? I didn't want to manually guess and check kernel sizes, so I looked online for general heuristics on how kernel size should be determined.
+    </p>
+        <div class="image-grid">
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/apple_level_0.jpg" alt="Apple Level 0" />
+                    <figcaption class="caption">Apple Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/oraple_level_0.jpg" alt="oraple Level 0" />
+                    <figcaption class="caption">Oraple Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/orange_level_0.jpg" alt="Orange Level 0" />
+                    <figcaption class="caption">Orange Level 0</figcaption>
+                </div>
+            </div>
         
-        <hr />
-        <h2 align="middle">Part 2: Fun with Frequencies</h2>
-
-
-        <hr />
-        <h3 align="middle">2.1 Image "Sharpening"</h2>
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/apple_level_2.jpg" alt="Apple Level 2" />
+                    <figcaption class="caption">Apple Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/oraple_level_2.jpg" alt="Oraple Level 2" />
+                    <figcaption class="caption">Oraple Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/orange_level_2.jpg" alt="Orange Level 2" />
+                    <figcaption class="caption">Orange Level 2</figcaption>
+                </div>
+            </div>
         
-
-        <hr />
-        <h3 align="middle">2.2 Hybrid Images </h2>
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/apple_level_4.jpg" alt="Apple Level 4" />
+                    <figcaption class="caption">Apple Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/oraple_level_4.jpg" alt="Oraple Level 4" />
+                    <figcaption class="caption">Oraple Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/orange_level_4.jpg" alt="Orange Level 4" />
+                    <figcaption class="caption">Orange Level 4</figcaption>
+                </div>
+            </div>
         
-        <hr />
-        <h2 align="middle">Multi-resolution Blending and the Oraple journey/h2>
-        <h3 align="middle">2.3 Gaussian and Laplacian Stacks</h3>
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/apple_reconstructed.jpg" alt="Apple Final" />
+                    <figcaption class="caption">Apple Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/oraple.jpg" alt="oraple Final" />
+                    <figcaption class="caption">Oraple Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/orange_reconstructed.jpg" alt="Orange Final" />
+                    <figcaption class="caption">Orange Final</figcaption>
+                </div>
+            </div>
+        </div>
 
-        <hr />
+        <h3 align="middle">2.4 Multi-Resolution Blending: the Oraple's final Journey!</h2>
+        <p>People often say that Apple Park (AP) looks like a doughnut... does it? For this, I had to use the alignment starter code to align the donut and AP. It was hard to find images that had similar lighting.</p>
+        <div class="image-grid">
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/donut_level_0.jpg" alt="Apple Level 0" />
+                    <figcaption class="caption">Donut Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/donut-ap_level_0.jpg" alt="oraple Level 0" />
+                    <figcaption class="caption">Donut-AP Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/ap_level_0.jpg" alt="Orange Level 0" />
+                    <figcaption class="caption">AP Level 0</figcaption>
+                </div>
+            </div>
+        
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/donut_level_2.jpg" alt="Apple Level 2" />
+                    <figcaption class="caption">Donut Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/donut-ap_level_2.jpg" alt="Oraple Level 2" />
+                    <figcaption class="caption">Donut-AP Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/ap_level_2.jpg" alt="Orange Level 2" />
+                    <figcaption class="caption">AP Level 2</figcaption>
+                </div>
+            </div>
+        
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/donut_level_4.jpg" alt="Apple Level 4" />
+                    <figcaption class="caption">Donut Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/donut_level_4.jpg" alt="Oraple Level 4" />
+                    <figcaption class="caption">Donut-AP Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/ap_level_4.jpg" alt="Orange Level 4" />
+                    <figcaption class="caption">AP Level 4</figcaption>
+                </div>
+            </div>
+        
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/donut_reconstructed.jpg" alt="Apple Final" />
+                    <figcaption class="caption">Donut Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/donut-ap.jpg" alt="oraple Final" />
+                    <figcaption class="caption">Donut-AP Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/ap_reconstructed.jpg" alt="Orange Final" />
+                    <figcaption class="caption">AP Final</figcaption>
+                </div>
+            </div>
+        </div>
 
-        <h3 align="middle">2.4 Multi-resolution Blending</h3>
-
-        <h2 align="middle">3. references</h2>
-        <ul>
-        </ul>
-
-        <div class="padded">
-
+        <p>An irregular mask, you say? This was inspired by my friend Viraj who wanted a catowl in the spirit of the catowl reddit page. I first aligned the cat and owl using the given starter code. Then, I used the aligned images to create my mask by positioning a circle on keynote to cover the owl's head. I took a screenshot of this and loaded it in as a numpy array. (Someone should teach me how to use Photoshop.) </p>
+            <div class="image-grid">
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/cat_level_0.jpg" alt="Cat Level 0" />
+                    <figcaption class="caption">Cat Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/catowl_level_0.jpg" alt="catowl Level 0" />
+                    <figcaption class="caption">Catowl Level 0</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/owl_level_0.jpg" alt="Orange Level 0" />
+                    <figcaption class="caption">Owl Level 0</figcaption>
+                </div>
+            </div>
+            
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/cat_level_2.jpg" alt="Cat Level 2" />
+                    <figcaption class="caption">Cat Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/catowl_level_2.jpg" alt="Catowl Level 2" />
+                    <figcaption class="caption">Catowl Level 2</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/owl_level_2.jpg" alt="Owl Level 2" />
+                    <figcaption class="caption">Owl Level 2</figcaption>
+                </div>
+            </div>
+        
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/cat_level_4.jpg" alt="Cat Level 4" />
+                    <figcaption class="caption">Cat Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/catowl_level_4.jpg" alt="Catowl Level 4" />
+                    <figcaption class="caption">Catowl Level 4</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/owl_level_4.jpg" alt="Owl Level 4" />
+                    <figcaption class="caption">Owl Level 4</figcaption>
+                </div>
+            </div>
+        
+            <div class="image-row">
+                <div class="image-container">
+                    <img src="./assets/multires/cat_reconstructed.jpg" alt="Cat Final" />
+                    <figcaption class="caption">Cat Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/catowl.jpg" alt="catowl Final" />
+                    <figcaption class="caption">Catowl Final</figcaption>
+                </div>
+                <div class="image-container">
+                    <img src="./assets/multires/owl_reconstructed.jpg" alt="Owl Final" />
+                    <figcaption class="caption">Owl Final</figcaption>
+                </div>
+            </div>
         </div>
 
     </article>
