@@ -1,0 +1,324 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <style>
+        body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+            /* color: #121212; */
+            color: rgb(55, 53, 47);
+            /* cursor: url(https://cdn.custom-cursor.com/db/8356/32/cute-potato-cursor.png), default !important;
+            cursor: url(https://cdn.custom-cursor.com/db/8355/32/cute-potato-pointer.png), pointer !important; */
+        }
+
+        /* figcaption {
+            /* margin-right: 7vw; } */
+
+        #desc p{
+          font-size: 12px;
+          text-align: center;
+          padding-right: 20px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        table {
+            margin-left: 3vw;
+        }
+
+        div.padded {
+            padding-top: 0px;
+            padding-right: 100px;
+            padding-bottom: 0.25in;
+            padding-left: 100px;
+        }
+
+        .bold-italic {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .image-row {
+            display: flex;
+            justify-content: center; /* Distribute space between images */
+            align-items: center; /* Align images vertically in the center */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 10px; /* Space between images */
+        }
+        .image-container {
+            text-align: center; /* Center the text below images */
+            flex-basis: 20%;  /*Allows containers to grow and shrink equally */
+            max-width: 100%; /* Ensures container does not exceed available width */
+            box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+
+        }
+        .image-container img {
+            max-width: 100%; /* Ensures images are responsive */
+            height: auto; /* Maintains aspect ratio */
+            display: block; /* Removes whitespace below images */
+            margin-left: auto; /* Centers images */
+            margin-right: auto; /* Centers images */
+        }
+        .caption {
+            margin-top: 5px; /* Space between image and caption */
+            font-size: 12px; /* Font size for the caption */
+            color: #555; /* Color for the caption text */
+            text-align: center;
+        }
+
+        .sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+        .code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+        .serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+        .mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+        .bold {font-weight: bold; }
+    </style>
+    <title>Clara | CS 180 Project 3</title>
+    <meta http-equiv="content-type" name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
+</head>
+<body>
+    <div align="center" style="margin:0; padding:0; display: flex;">
+      <!-- <img src="imgs/out_exo.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="task1 summary" />
+        <img src="imgs/out_exe.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="task1 summary" />
+        <img src="imgs/out_exp.jpg" align="middle" style="margin-left:auto; margin-right:auto; display:block; width: 200px;" alt="microfacet bunny in env" /> -->
+    </div>
+
+    <article class="sans">
+
+        <br />
+        <h1 align="middle">CS180: Introduction to Computer Vision & Computation Photography</h1>
+        <h1 align="middle">Project 3</h1>
+        <h2 align="middle" class="bold-italic">Face Morphing</h3>
+        <h3 align="middle">Clara Hung</h2>
+
+        <h2 align="middle">Project Overview</h2>
+        <p>The goal of this project is to use what we've learned about transformations to create a morph animation of our face into someone else's face. Additionally, we'll compute the mean of a population of faces and extrapolate from a mean to make a caricature of ourselves.</p>
+        <hr />
+        
+        <h2 align="middle">Part 1: Defining Correspondances</h2>
+        <p>For this part, I first defined 55 corresponding points on my two images by hand, including 4 points that represent the 4 corners of the image so we can morph the background as well. At first, I wrote my on tool using <code>ginput</code>, but it was inconvinient to remember the ordering of my points, so I used <a href="https://cal-cs180.github.io/fa23/hw/proj3/tool.html">this correspondance tool</a> from last year to define my points. The key here is to make sure that the points on the two faces are in the same order. I saved these points as a <code>json</code> to make my life easier.</p>
+
+        <p>Next, in order to actually do the morph, we need a triangulation. I used a <strong>Delaunay</strong> triangulation because that is the most optimal for morphing since it doesn't produce triangles with extreme angles (too big or too small). We like it "just right" just like goldilocks. To make my morph look better, I first computed the a set of midpoints by taking the average of corresponding points. This makes the morph look more gradual and pleasing to the eye. Then, I used scipy's <code>Delaunay</code> class to compute the triangulations at the midway shape.</p>
+
+        <p>Below are images if my midway triangulation displayed on both of my test faces! I tried besties Taylor Swift and Karlie Kloss from <a href="http://en.wikipedia.org/wiki/Martin_Schoeller">Martin Schoeller's collection</a>. It also makes my life easier since they have similar faces : ). </p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/taylor_tri.png" alt="triangulated taylor" />
+                <figcaption class="caption">Midway Triangulation on Taylor Swift</figcaption>
+            </div>
+            <div class="image-container">
+                <img src="assets/karlie_tri.png" alt="triangulated karlie" />
+                <figcaption class="caption">Midway Triangulation on Karlie Kloss</figcaption>
+            </div>
+        </div>
+    <hr />
+
+    <h2 align="middle">Part 2: Computing the "Mid-Way Face"</h2>
+    <p>Before computing the whole morph sequence, we compute the midway face as a benchmark to make sure our code works, and we can use it to build the full morph sequence. To compute the mid-way face, we must complete the following steps:
+    </p>
+
+    <ol>
+        <li>Compute the average shape of the two faces by taking the average of the corresponding points.</li>
+        <li>Compute the Delaunay triangulation of the average shape.</li>
+        <li>For each triangle: Compute the affine transformation matrices for each triangle in the triangulation for both faces. This matrix transforms FROM the image TO the midway face.</li>
+        <li>Take the inverse affine matrix.</li>
+        <li>Apply the inverse affine transformation matrices from the midway face TO the original image and use this to interpolate the color values of that triangle (aka, paint the patch).</li>
+        <li>Repeat for all triangles. Add each result to our final midway face.</li>
+        <li>Compute the mid-way face by taking the average of the two warped faces.</li>
+    </ol>
+
+    <p>Here are my results!</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/taylor-karlie-midway.jpg" alt="midway face" />
+            <figcaption class="caption">Taylor-Karlie Midway Face</figcaption>
+        </div>
+    </div>
+
+    <p>I also did a midway morph of me and my friend Janet! We took some fancy headshots at an Astronaut Scholars Event.</p>
+    <div class="image-row">
+        <div class="image-container" >
+            <img src="assets/clara-asf-aligned-small.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Clara</figcaption>
+        </div>
+        <div class="image-container" >
+            <img src="assets/clara-janet-midway.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Clara-Janet Midway Face</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/janet-asf-aligned-small.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Janet</figcaption>
+        </div>
+    </div>
+
+
+    <hr />
+    <h2 align="middle">Part 3: The Morph Sequence</h2>
+    <p>To produce the morph sequence, I can use the code I wrote above but adapt it with two new parameters: <code>warp_frac</code> and <code>dissolve_frac</code>. These control how much we warp and cross-dissolve, respectively, and they should both be proportional to which "frame" we are in. mathematically, this looks like a weighted average: \( (1 - \alpha) \cdot \text{img1} + \alpha \cdot \text{img2} \). For my results below, I used 50 frames at 30fps.</p>
+
+    <div class="image-row">
+        <div class="image-container" >
+            <img src="assets/taylor.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Taylor Swift</figcaption>
+        </div>
+        <div class="image-container" >
+            <img src="assets/taylor_karlie_30ms.gif" alt="morph sequence"/>
+            <figcaption class="caption">Taylor-Karlie Sequence</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/karlie.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Karlie Kloss</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container" >
+            <img src="assets/clara-asf-aligned-small.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Clara</figcaption>
+        </div>
+        <div class="image-container" >
+            <img src="assets/clara-janet.gif" alt="morph sequence"/>
+            <figcaption class="caption">Clara-Janet Sequence</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/janet-asf-aligned-small.jpg" alt="morph sequence"/>
+            <figcaption class="caption">Janet</figcaption>
+        </div>
+    </div>
+
+    <h2 align="middle">Part 4: The "Mean Face" of a Population</h2>
+    <p>Now, we want to get a very mean face... in the mathematical sense! I took the <a href="https://fei.edu.br/~cet/facedatabase.html">FEI dataset</a> because it was the easiest to work with, corresponding points wise. I wish I was more creative and actually found an Asian person database to use, but alas, I have grad apps to work on and don't have time to go digging :'). This dataset consists of 200 individuals take at the AI Laboratory of FEI in Bernardo do Campo, São Paulo, Brazil. There are 1000 male and 1000 female subjects, with one neutral photo and one smiling photo. They come with 46 annotated correspondance points, which is what we'll be using to compute the mean face!</p>
+
+    <p>To compute the mean face, we first choose a subset of the data: neutral or smiling. For each subset, we compute the average of each point across all 1000 images. Then, using this point set, we create a triangulation, warp each face to this "mean face", and average all the warped faces. Make sure you used the normalized data provided on the website! This way, all the faces are already aligned for you! I had to make sure my code could work with grayscale images for this part. </p>
+
+    <p>Here are my results!</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/mean_face.png" alt="mean face" />
+            <figcaption class="caption">Mean Neutral Face</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/mean_face_smile.png" alt="mean face" />
+            <figcaption class="caption">Mean Smiling Face</figcaption>
+        </div>
+    </div>
+
+    <p>Here are some examples of Brazilians morphed to the average face:</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/1b.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 1</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="assets/fei_norm_morphed_0.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 1 Morphed</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/21b.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 21</figcaption>
+
+        </div>
+        <div class="image-container">
+            <img src="assets/fei_norm_morphed_20.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 21 Morphed</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/42b.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 42</figcaption>
+
+        </div>
+        <div class="image-container">
+            <img src="assets/fei_norm_morphed_40.jpg" alt="mean face brazilian" />
+            <figcaption class="caption">Person 42 Morphed</figcaption>
+        </div>
+    </div>
+
+    <p>Ever wonder what I look like as a Brazilian? Never? Me neither. However, CS180 staff wants to see it so here it goes... To do this, I first had to find a photo that roughly matches the photos they had. Then, I had to resize and downsample to match the dimensions. Then, I had to annotate all 46 points, in-order, for my own photo. To warp to the average Brazilian, I warped myself to the mean triangulation. To clara-fy the Brazilians, I had to warp them to my triangulation.</p>
+
+    <p>My images look kind of funky, and I think it's because I couldn't find an image that had the right aspect ratio and perspective as the Brazilian images. I don't think you want a photo of my as I am writing this, so apologies that this will have to do. I think the results would end up better if I used the image alignment code from project 2 to align the images together.</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/clara.jpg" alt="clara" height="300px"/>
+            <figcaption class="caption">Clara Original</figcaption>
+        </div>
+        <div class="image-container">
+            <img src="assets/clara2fei.jpg" alt="clara brazilian" />
+            <figcaption class="caption">Clara as a Brazilian</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/fei2clara.jpg" alt="brazilian clara" />
+            <figcaption class="caption">Brazilian as Clara</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/39b.jpg" alt="brazilian" />
+            <figcaption class="caption">Brazilian Original</figcaption>
+        </div>
+    </div>
+
+    <h2 align="middle">Part 5: Caricatures: Extrapolating From the Mean</h2>
+    <p>Now, we want to make a caricature of myself -- oh my! To do this, we first compute the difference between the mean face and the original face. Then, we multiply this difference by a scalar \( \alpha \) to get a caricature. Mathematically, this looks like: \((1 - \alpha) \cdot \text{self} + \alpha \cdot \text{mean}\). This scalar can be positive or negative, depending on if you want to exaggerate or minimize the features. I chose to use \( \alpha = 0.5 \) for my results, which means this is the image we get when we exaggerate my face's features. We can see that it makes my face a lot more pentagonal since my face is already pretty pentagonal.</p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/clara_caricature.jpg" alt="caricature" />
+            <figcaption class="caption">Caricature</figcaption>
+        </div>
+    </div>
+
+    <h2 align="middle">Part 6: Bells and Whistles</h2>
+    <p>For my bells and whistles, I thought it would be cool to morph my siblings and I together! For this, I first aligned ourselves using the alignment code from Project 2, selected 50 key points, and followed the process outlined in part 2 and 3. There's some aliasing in the colors. I think it might be due to not normalizing my images first. </p>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/clara_resized copy.jpg" alt="sibling 1" />
+            <figcaption class="caption">Clara</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/loren_resized.jpg" alt="sibling 1" />
+            <figcaption class="caption">Loren</figcaption>
+        </div>
+
+        <div class="image-container">
+            <img src="assets/calvin_resized.jpg" alt="sibling 1" />
+            <figcaption class="caption">Calvin</figcaption>
+        </div>
+    </div>
+
+    <div class="image-row">
+        <div class="image-container">
+            <img src="assets/sibling_morph.gif" alt="sib morph" />
+            <figcaption class="caption">Sibling Morph</figcaption>
+        </div>
+    </div>
+
+    </article>
+
+</body>
+</html>
