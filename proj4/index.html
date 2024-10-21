@@ -111,53 +111,189 @@
 
         <h2 align="middle">Image Warping and Mosaicing</h2>
 
-
         <h2 align="middle">1. Shooting Photos</h2>
         <p></p>
         <hr />
 
         <h2 align="middle">2. Recover Homographies</h2>
-        <p></p>
+        <p>As a refresher, here is how we can solve for the homography matrix given a set of points! A homography performs the transformation \(p' = Hp\), where \(p'\) is the original set of points and \text{p'} are the points you are trying to warp to. If we have a homography matrix:
+            \( H = \begin{pmatrix}
+                h_{1} & h_{2} & h_{3} \\
+                h_{4} & h_{5} & h_{6} \\
+                h_{7} & h_{8} & 1
+                \end{pmatrix} \)
+
+            and a set of points:
+            \( \begin{pmatrix}
+                x_{1} & y_{1} & 1 \\
+                x_{2} & y_{2} & 1 \\
+                x_{3} & y_{3} & 1 \\
+                x_{4} & y_{4} & 1
+                \end{pmatrix} \).
+
+            We can solve for the homography matrix by setting up the following equations and solving via least squares:
+            \(\begin{bmatrix} x_1 & y_1 & 1 & 0
+            & 0 & 0 & -x'_1 x_1 & -x'_1 y_1 \\
+            0 & 0 & 0 & x_1 & y_1 & 1 & -y'_1 x_1 &
+            -y'_1 y_1 \\
+            x_2 & y_2 & 1 & 0 & 0 & 0 & -x'_2 x_2 &
+            -x'_2 y_2 \\
+            0 & 0 & 0 & x_2 & y_2 & 1 & -y'_2 x_2 &
+            -y'_2 y_2 \\ & & & &  \vdots\end{bmatrix}
+            \begin{bmatrix} h_1 \\ h_2 \\ h_3 \\ h_4 \\ h_5 \\ h_6 \\ h_7 \\ h_8
+            \end{bmatrix} =
+            \begin{bmatrix}
+            x'_1 \\ y'_1 \\ x'_2 \\ y'_2 \\ \vdots
+            \end{bmatrix}\).
+
+            In the end, we get:
+            \(\begin{bmatrix} x' \\ y' \\ w
+            \end{bmatrix} = \begin{bmatrix} h_1 & h_2 & h_3 \\ h_4 & h_5
+            & h_6 \\ h_7 & h_8 & 1 \end{bmatrix} \begin{bmatrix} x \\ y
+            \\ 1 \end{bmatrix}\), which becomes: \(\begin{bmatrix}
+            \frac{x'}{w} \\ \frac{y'}{w} \end{bmatrix}\)
+
+        </p>
+
+        <p>For this project, I used <a href="https://cal-cs180.github.io/fa23/hw/proj3/tool.html">this tool</a> to help me define each of the correspondance points in the images.</p>
         <hr />
 
-        <h2 align="middle">3. Warp Images</h2>
-        <p></p>
+        <h2 align="middle">3. Image Rectification</h2>
+        <p>A simple way to test if our homography works is by rectifying an image. Say I had a photo of a sign viewed from an angle:</p>
 
-        <div class="image-row"></div>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/coffee.jpeg" alt="Sign" />
+                <p class="caption">Coffee Sign Viewed from an Angle</p>
+            </div>
+        </div>
+        
+        <p>But I want to view it head-on. I can compute the homography transform from the coordinate system of the original image to the coordinate system of a rectified image. Now, I will be able to see the sign as if I were looking at it directly!</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/results/warped_coffee.jpg" alt="Rectified Sign" />
+                <p class="caption">Rectified Coffee Sign</p>
+            </div>
+        </div>
+
+        <p>Here's another example applied to the license plate "ICHBIN". The actual license plate is small, but you can see how the license plate is now facing us.</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/ichbin.jpeg" alt="License Plate" />
+                <p class="caption">License Plate "ICHBIN"</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/warped_ichbin.jpg" alt="License Plate" />
+                <p class="caption">Rectified "ICHBIN"</p>
+            </div>
+        </div>
+
+        <p>And another example applied to this book talk poster. Fun fact, I will be moderating this talk! You should come!</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/booktalk.png" alt="License Plate" />
+                <p class="caption">Book Talk</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/warped_booktalk.jpg" alt="License Plate" />
+                <p class="caption">Rectified Booktalk</p>
+            </div>
+        </div>
+
+        <p>A couple things I learned here:</p>
+        <ul>
+            <li>Make sure the corners of the surface you're trying to rectify are in the same order as your rectified corners.</li>
+            <li>Remember to choose your points such that, when you use <code>polygon</code> to recover your bounding box, the polygon's lines don't cross. That is, choose the points in an order such that the polygon has as large angles as possible.</li>
+            <li>Use the <code>cv2</code> homography functions to debug.</li>
+        </ul>
+
         <hr />
 
         <h2 align="middle">4. Blend Images Into a Mosaic</h2>
-        <p></p>
+        <p>Here comes the hard part! To create the mosaic of images, I based it off of the method we discussed in lecture. 
+            First, I chose one image as the reference image and computed the homography to warp all other images to the reference image. 
+            Then, I created a mosaic canvas that was large enough to fit all the images. The way I did this is by finding the corners of the warped images and the reference image, then finding the minimum and maximum x and y values. This allowed me to find the width and height of the mosaic canvas. Once I did that, I created masks that were the size of this new canvas and filled the mask according to the non-zero values of the warped image and the original image. For this step, you have to be very careful in remembering to shift either the warped image or the reference image to the new canvas. The reason for this is because sometimes, your homography transform may result in a negative value in your new coordinate systems. You want to shift the negative values to positive but also account for this in the rest of your calculations.
+        </p>
+
+        <p>To blend the images, I used the two-band blending method from lecture. To reduce the presence of seams and ghosting, I used <code>scipy.ndimage.distance_transform_edt</code> to weight the mask pixel values relative to how far they were from the borders. I originally tried using the <code>cv2.distanceTransform</code> function but debugging that became really annoying due to it's lack of useful error messages. The reason why the borders of the images will produce seams is because during the gaussian blurring process, the blur kernel will take in black pixels from the edges, leading to a shading effect.</p>
+        
+        <p>Here is the general flow for blending the two images together:</p>
         <ol>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
-            <li></li>
+            <li>Compute the homography of the warped image to the reference image.</li>
+            <li>Compute the corners of the warped image and the reference image</li>
+            <li>Compute the size of the mosaic canvas</li>
+            <li>Compute the mask for the warped image and the reference image</li>
+            <li>Compute the distance transform for the mask</li>
+            <li>Find the low and high frequencies fo each image</li>
+            <li>Compute a weighted average of the low and high frequencies together using their masks.</li>
+            <li>Combine the low and high frequencies together</li>
+            <li>Blend the images together</li>
         </ol>
 
-        <div class="image-row"></div>
+        <p>Here are some example photos I took!</p>
+
+        <p><strong>Sunset:</strong> The sunset image worked a lot better than I expected!</p>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/sunset1.jpeg" alt="Sunset" />
+                <p class="caption">Sunset 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_sunset.jpg" alt="Sunset" />
+                <p class="caption">Sunset Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/sunset2.jpeg" alt="Sunset" />
+                <p class="caption">Sunset 2</p>
+            </div>
+        </div>
+
+        <p><strong>Grass:</strong> Here, you can see a mild crease in the sky. It's not super obvious unless you squint, but I think that is something I can work on improving for Part B. Perhaps my blending is absorbing some of the border into the blend.</p>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/half-religion1.jpeg" alt="Sunset" />
+                <p class="caption">Pacific School of Religion 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_religion.jpg" alt="Sunset" />
+                <p class="caption">Pacific School of Religion Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/half-religion2.jpeg" alt="Sunset" />
+                <p class="caption">Pacific School of Religion 2</p>
+            </div>
+        </div>
+
+        <p><strong>Philly:</strong> As you can see here, there is a little bit of blurriness at the bottom of the image, and the cars are mismatched. I believe this is because I was standing next to a busy street, so the cars naturally moved. Thus, in my second image, the cars shifted position! As we are limited by a 2D image, we cannot capture the cars in time. </p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/half-philly1.JPG" alt="Sunset" />
+                <p class="caption">Philly 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_philly.jpg" alt="Sunset" />
+                <p class="caption">Philly Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/half-philly2.JPG" alt="Sunset" />
+                <p class="caption">Phlly 2</p>
+            </div>
+        </div>
         <hr />
 
-        <h2 align="middle">5. Bells and Whistles</h2>
-        <p></p>
-
-        <div class="image-row"></div>
-        <hr />
-
-        <h2 align="middle"></h2>
-        <p></p>
-
-        <div class="image-row"></div>
-        <hr />
-
-        <h2 align="middle"></h2>
-        <p></p>
-
-        <div class="image-row"></div>
-        <hr />
+        <p>Stay Tuned for Part B!</p>
     </article>
 </body>
 </html>
