@@ -51,7 +51,7 @@
 
         .image-container {
             text-align: center;
-            flex-basis: 20%;
+            flex-basis: 30%;
             max-width: 100%;
             box-sizing: border-box;
         }
@@ -90,6 +90,25 @@
         .bold {
             font-weight: bold;
         }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 150px); /* 4 columns */
+            grid-gap: 10px; /* Space between images */
+            justify-content: center;
+
+        }
+        .grid-item img {
+            width: 100%;
+            height: auto; /* Maintain aspect ratio */
+        }
+
+        .grid-container-smol {
+            display: grid;
+            grid-template-columns: repeat(8, 100px); /* 4 columns */
+            grid-gap: 10px; /* Space between images */
+            justify-content: center;
+
+        }
     </style>
     <title>Clara | CS 180 Project 4</title>
     <meta http-equiv="content-type" name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,49 +128,69 @@
         <h2 align="middle">Project Overview</h2>
         <p>The goal of this project is to get hands-on experience with different methods of image warping applied to image mosaicing. Trhough this, we will create an image mosaic by first taking our own photographs, then register, projective warp, resample, and composite images. Then, we will automate correspondence-finding so we can generate panoramas automatically. As for Part A, it's homography time!</p>
 
-        <h2 align="middle">Image Warping and Mosaicing</h2>
+        <b><h2 align="middle">Image Warping and Mosaicing</h2></b>
 
         <h2 align="middle">1. Shooting Photos</h2>
         <p>See photos below!</p>
         <hr />
 
         <h2 align="middle">2. Recover Homographies</h2>
-        <p>As a refresher, here is how we can solve for the homography matrix given a set of points! A homography performs the transformation \(p' = Hp\), where \(p'\) is the original set of points and \text{p'} are the points you are trying to warp to. If we have a homography matrix:
-            \( H = \begin{pmatrix}
+        <p>As a refresher, here is how we can solve for the homography matrix given a set of points! A homography performs the transformation \(p' = Hp\), where \(p'\) is the original set of points and \text{p'} are the points you are trying to warp to. If we have a homography matrix:</p>
+        <p>
+            $$
+            H = \begin{pmatrix}
                 h_{1} & h_{2} & h_{3} \\
                 h_{4} & h_{5} & h_{6} \\
                 h_{7} & h_{8} & 1
-                \end{pmatrix} \)
+                \end{pmatrix} 
+            $$
+            </p>
+            <p>and a set of points:</p>
+            <p>
+                $$
+                \begin{pmatrix}
+                    x_{1} & y_{1} & 1 \\
+                    x_{2} & y_{2} & 1 \\
+                    x_{3} & y_{3} & 1 \\
+                    x_{4} & y_{4} & 1
+                \end{pmatrix}
+                $$
+            </p>
 
-            and a set of points:
-            \( \begin{pmatrix}
-                x_{1} & y_{1} & 1 \\
-                x_{2} & y_{2} & 1 \\
-                x_{3} & y_{3} & 1 \\
-                x_{4} & y_{4} & 1
-                \end{pmatrix} \).
-
-            We can solve for the homography matrix by setting up the following equations and solving via least squares:
-            \(\begin{bmatrix} x_1 & y_1 & 1 & 0
-            & 0 & 0 & -x'_1 x_1 & -x'_1 y_1 \\
-            0 & 0 & 0 & x_1 & y_1 & 1 & -y'_1 x_1 &
-            -y'_1 y_1 \\
-            x_2 & y_2 & 1 & 0 & 0 & 0 & -x'_2 x_2 &
-            -x'_2 y_2 \\
-            0 & 0 & 0 & x_2 & y_2 & 1 & -y'_2 x_2 &
-            -y'_2 y_2 \\ & & & &  \vdots\end{bmatrix}
-            \begin{bmatrix} h_1 \\ h_2 \\ h_3 \\ h_4 \\ h_5 \\ h_6 \\ h_7 \\ h_8
-            \end{bmatrix} =
-            \begin{bmatrix}
-            x'_1 \\ y'_1 \\ x'_2 \\ y'_2 \\ \vdots
-            \end{bmatrix}\).
-
-            In the end, we get:
-            \(\begin{bmatrix} x' \\ y' \\ w
-            \end{bmatrix} = \begin{bmatrix} h_1 & h_2 & h_3 \\ h_4 & h_5
-            & h_6 \\ h_7 & h_8 & 1 \end{bmatrix} \begin{bmatrix} x \\ y
-            \\ 1 \end{bmatrix}\), which becomes: \(\begin{bmatrix}
-            \frac{x'}{w} \\ \frac{y'}{w} \end{bmatrix}\)
+            <p>We can solve for the homography matrix by setting up the following equations and solving via least squares:</p>
+            <p>
+                $$
+                \begin{bmatrix} 
+                    x_1 & y_1 & 1 & 0 & 0 & 0 & -x'_1 x_1 & -x'_1 y_1 \\
+                    0 & 0 & 0 & x_1 & y_1 & 1 & -y'_1 x_1 & -y'_1 y_1 \\
+                    x_2 & y_2 & 1 & 0 & 0 & 0 & -x'_2 x_2 & -x'_2 y_2 \\
+                    0 & 0 & 0 & x_2 & y_2 & 1 & -y'_2 x_2 & -y'_2 y_2 \\
+                    & & & & \vdots & & & \\
+                \end{bmatrix}
+                \begin{bmatrix} 
+                    h_1 \\ h_2 \\ h_3 \\ h_4 \\ h_5 \\ h_6 \\ h_7 \\ h_8 
+                \end{bmatrix} = 
+                \begin{bmatrix} 
+                    x'_1 \\ y'_1 \\ x'_2 \\ y'_2 \\ \vdots 
+                \end{bmatrix}
+                $$
+                </p>                
+            <p>In the end, we get:</p>
+            <p>
+                \[
+                \begin{bmatrix} x' \\ y' \\ w \end{bmatrix} = 
+                \begin{bmatrix} h_1 & h_2 & h_3 \\ h_4 & h_5 & h_6 \\ h_7 & h_8 & 1 \end{bmatrix} 
+                \begin{bmatrix} x \\ y \\ 1 \end{bmatrix}
+                \]
+                </p>
+                
+                <p>which becomes:</p>
+                
+                <p>
+                \[
+                \begin{bmatrix} \frac{x'}{w} \\ \frac{y'}{w} \end{bmatrix}
+                \]
+                </p>                
 
         </p>
 
@@ -235,6 +274,19 @@
             <li>Blend the images together</li>
         </ol>
 
+        <p>Here is an example of what the distance transform mask looks like for my Chicago Skyline images in Part B.</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/results/mask_warp.jpg" alt="Mask" />
+                <p class="caption">Mask for Warped Image</p>
+            </div>
+            <div class="image-container">
+                <img src="assets/results/mask_ref.jpg" alt="Mask" />
+                <p class="caption">Mask for Reference Image</p>
+            </div>
+        </div>
+
         <p>Here are some example photos I took!</p>
 
         <p><strong>Sunset:</strong> The sunset image worked a lot better than I expected!</p>
@@ -293,7 +345,239 @@
         </div>
         <hr />
 
-        <p>Stay Tuned for Part B!</p>
+        <h2 align="middle">Feature-matching and Autostitching</h2>
+        <p>For the second part of the project, we are using the methods outlined in Brown et al's paper <a href="https://inst.eecs.berkeley.edu/~cs180/fa24/hw/proj4/Papers/MOPS.pdf">“Multi-Image Matching using Multi-Scale Oriented Patches”</a>, specifically sections 2, 3, 4, and 5. The goal of this section is we want to be able to automatically stich images into a mosaic since, as we learned in part a, choosing correspondance points is super tedious.</p>
+        <hr>
+
+        <h2 align="middle">1. Detecting corners</h2>
+        <p>For corner detection, I used the <b>Harris Interest Point Detector</b> in Section 2 of the paper. To identify the corners, I used the code in <code>harris.py</code>. I converted my image to grayscale and used <code>get_harris_corners</code> to retreive the harris score <code>h</code> and <code>corners</code>. The function returns the scores as <code>(y, x)</code> but I wanted to use the points in the form <code>(x, y)</code> so I transposed the returned array.</p>
+        <hr>
+
+        <h2 align="middle">2. Extracting feature descriptors</h2>
+        <p>For feature extraction, I followed Section 3's <b>Adaptive Non-Maximal Suppression</b> (ANMS) with <code>c_robust = 0.9</code> (as recommended in the paper) and <code>num_corners = 100</code>.</p>
+
+        <p>To compute the actual ANMS score, followed the following procedure: </p>
+        <ol>
+            <li>I obtained the scores of each corner by indexing <code>h[corners[:, 0], corners[:, 1]]</code>.</li>
+            <li>Then, I computed the pairwise distances of the corners using the <code>dist2</code> function provided in the <code>harris.py</code> starter code.</li>
+            <li>Next, I created a mask to determine if \( f(x_i) < c_{\text{robust}} \cdot f(x_j) \) by using array broadcasting <code>scores[:, np.newaxis] < (c_robust * scores[np.newaxis, :])</code>. This essentially compares the strength of each of the corners.</li>
+            <li>Applied the mask to my distance matrix of corner strength.</li>
+            <li>Set zero elements of the matrix to be infinity. This is useful since we perform a minimization operation in the next step. (If you forget to do this, you may end up with 0-1 cornerse and be very confused.)</li>
+            <li>To compute the minimum suppression radius, which minimizes the squared distances, I take <code>np.min(masked_dists, axis=1)</code>, then obtain the sorted indices based on suppression radius from largest to smallest using <code>(-radii).argsort()</code>. Then, I use that to obtain the sorted corners and select the first <code>num_corners</code> points as my ANMS points.</li>
+        </ol>
+
+        <p>Below is an example of the result of the Harris points vs the ANMS points!</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/results/city1-corners.jpg" alt="Harris Corners" />
+                <p class="caption">Harris Corners</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/city1-anms.jpg" alt="ANMS Corners" />
+                <p class="caption">ANMS Corners</p>
+            </div>
+        </div>
+        <hr>
+
+        <h2 align="middle">3. Extracting feature descriptors</h2>
+        <p>To extract feature descriptors, I followed Section 4 of the paper. For every point in the ANMS points, I:</p>
+
+        <ol>
+            <li>Extracted a 40x40 patch around the point.</li>
+            <li>Downsampled this patch to become 8x8.</li>
+            <li>Normalized the intensity by subtracting the mean and dividing by the standard deviation of the patch.</li>
+            <li>Flattened the patch to be <code>(1, 192)</code> using <code>features.reshape(features.shape[0], -1)</code></li>
+        </ol>
+
+        <p>Below are a sample of my features:</p>
+
+        <div class="grid-container-smol" align="middle">
+            <div class="grid-item">
+                <img src="assets/results/1-match1.jpg" alt="1-match1"></div>
+            <div class="grid-item">
+                <img src="assets/results/2-match7.jpg" alt="2-match1"></div>
+            <div class="grid-item">
+                <img src="assets/results/2-match8.jpg" alt="1-match2"></div>
+            <div class="grid-item">
+                <img src="assets/results/2-match2.jpg" alt="2-match2"></div>
+            <div class="grid-item"><img src="assets/results/2-match9.jpg" alt="1-match3"></div>
+            <div class="grid-item"><img src="assets/results/2-match3.jpg" alt="2-match3"></div>
+            <div class="grid-item"><img src="assets/results/2-match10.jpg" alt="1-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match4.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match11.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match5.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match12.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match6.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match13.jpg" alt="1-match3"></div>
+            <div class="grid-item"><img src="assets/results/2-match14.jpg" alt="2-match3"></div>
+            <div class="grid-item"><img src="assets/results/2-match15.jpg" alt="1-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match16.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match17.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match18.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match19.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match20.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match21.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match22.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match36.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match37.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match38.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match39.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match40.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match24.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match25.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match23.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match26.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match27.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match28.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match29.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match30.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match31.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match32.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match33.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match34.jpg" alt="2-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match35.jpg" alt="2-match6"></div>
+        </div>
+        <hr>
+
+        <h2 align="middle">4. Matching feature descriptors</h2>
+        <p>To match feature descriptors, Section 5 of the paper, I did the following:</p>
+
+        <ol>
+            <li>Extracted the features and their corresponding points for both images.</li>
+            <li>For each feature compute the pairwise differences between the features of the the two images. I again used numpy array broadcasting (<code>diff = features1[:, np.newaxis, :] - features2[np.newaxis, :, :]</code>), which produces a <code>(num_points, num_points, 192)</code> matrix.</li>
+            <li>Take the squared differences and sum over all 192 pixels to get a 100x100 matrix of the sum of squared differences.</li>
+            <li>Sor each row (feature) from smallest to largest using <code>np.sort(ssd)</code>.</li>
+            <li>The paper uses something called a Lowe Score, which is basically a comparison between the first nearest neighbor (NN) distance with the second NN distance. To do this, I computed <code>lowe = nn_dists[:, 0] / nn_dists[:, 1]</code> across all features.</li>
+            <li>Then, I created a mask <code>lowe <= lowe_threshold</code> so I could extract features lower than the Lowe score. This means that the feature is most closely matched with its 1NN. For my project, I used <code>lowe_threshold = 0.3</code>.</li>
+            <li>I obtained the indices of the 1NN for each feature <code>ssd.argsort()[:,0]</code>, then create a list of the indices paired with their corresponding image 1 features via <code>np.stack([np.arange(0, closest.shape[0]), closest]).T</code>.</li>
+            <li>Finally, I filtered the index, feature pairs using <code>matches[lowe_mask]</code>.</li>
+        </ol>
+
+        <p>I used a lowe threshold of 0.3. Below are the first 12 match examples! The pictures are blurry because I'm blowing up an 8x8 image to be viewable on the screen.</p>
+
+        <div class="grid-container" align="middle">
+            <div class="grid-item">
+                <p>Source Image</p>
+                <img src="assets/results/1-match1.jpg" alt="1-match1"></div>
+            <div class="grid-item">
+                <p>Destination Image</p>
+                <img src="assets/results/2-match1.jpg" alt="2-match1"></div>
+            <div class="grid-item">
+                <p>Source Image</p>
+                <img src="assets/results/1-match2.jpg" alt="1-match2"></div>
+            <div class="grid-item">
+                <p>Destination Image</p>
+                <img src="assets/results/2-match2.jpg" alt="2-match2"></div>
+            <div class="grid-item"><img src="assets/results/1-match3.jpg" alt="1-match3"></div>
+            <div class="grid-item"><img src="assets/results/2-match3.jpg" alt="2-match3"></div>
+            <div class="grid-item"><img src="assets/results/1-match4.jpg" alt="1-match4"></div>
+            <div class="grid-item"><img src="assets/results/2-match4.jpg" alt="2-match4"></div>
+            <div class="grid-item"><img src="assets/results/1-match5.jpg" alt="1-match5"></div>
+            <div class="grid-item"><img src="assets/results/2-match5.jpg" alt="2-match5"></div>
+            <div class="grid-item"><img src="assets/results/1-match6.jpg" alt="1-match6"></div>
+            <div class="grid-item"><img src="assets/results/2-match6.jpg" alt="2-match6"></div>
+        </div>
+        <hr>
+
+        <h2 align="middle">5. Use a robust method (RANSAC) for homography</h2>
+        <p>To implement RANSAC for computing homographies, I implemented the procedure we talked about in lecture, using these steps:</p>
+
+        <ol>
+            <li>Using the matches obtained from Step 4 and the points from Step 2, I split my points into source and destination points <code>matches_src, matches_dst = points1[matches[:, 0]], points2[matches[:, 1]]</code>.</li>
+            <li>Randomly select 4 points from the matches using <code>np.random.choice(src_pts.shape[0], size=4,replace=False)</code>.</li>
+            <li>Compute the homography matrix using the 4 points using the <code>computeH</code> function from Part A.</li>
+            <li>Convert the source points to homogenous form <code>(x, y, 1)</code>.</li>
+            <li>Transform source points into destination coordinates.</li>
+            <li>Unscale the transformed points, then remove the homogenous column.</li>
+            <li>Compute the number of inliers by computing the distance between the points and the homography matrix <code>np.sqrt(np.sum((dst_pts - transformed_src) ** 2, axis=1))</code>. Create a mask by checking if the distance is less than a threshold. If it is, then the point is an inliers.</li>
+            <li>Repeat steps 1-3 for <code>steps</code> iterations.</li>
+            <li>Throughout all iterations, keep track of the mask with the maximum number of inliers. At the end, use <code>best_mask</code> to return the source and destination points that produce the best homography. These are our corresponding points like in Part A.</li>
+        </ol>
+
+        <p>I used a threshold of 0.8 and 1000 steps. Here are images of my final corresponding points (red points):</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/results/src_anms.jpg" alt="1-matches" />
+                <p class="caption">Source Image</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/dst_anms.jpg" alt="2-matches" />
+                <p class="caption">Destination Image</p>
+            </div>
+        </div>
+        <hr>
+
+        <h2 align="middle">6. Final Mosaics</h2>
+        <p>To create the final mosaics using auto-stitching, I used the best set of source and desination points from Step 5, computing the homography matrix using these points and blending them together like in Part A. Before I threw my points into homography, I had to remember to swap the x and y axes of my points due to the way they are stored. Here are some of my final mosaics!</p>
+
+        <h3><b>The Bean at Night</b></h3>
+        <p>For this image, there is a bit of a seam in the middle since the exposure of the left image is different from the right image. This is due to iPhone's auto-exposure control. The result would look better once I implement some exposure correction.</p>
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/bean1.jpeg" alt="The Bean" />
+                <p class="caption">The Bean 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_bean.jpg" alt="The Bean" />
+                <p class="caption">The Bean Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/bean2.jpeg" alt="The Bean" />
+                <p class="caption">The Bean 2</p>
+            </div>
+        </div>
+
+        <h3><b>The Chicago Theater</b></h3>
+        <p>For this image, I had to crop out the cars at the bottom of the image. The cars moved between the two frames, which made my auto feature detection match to the cars, yet the cars were in different positions in both photos so the mosaic alignment would not work properly.</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/chi1.jpeg" alt="The Chicago Theater" />
+                <p class="caption">The Chicago Theater 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_chi.jpg" alt="The Chicago Theater" />
+                <p class="caption">The Chicago Theater Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/chi2.jpeg" alt="The Chicago Theater" />
+                <p class="caption">The Chicago Theater 2</p>
+            </div>
+        </div>
+
+        <h3><b>Chicago Skyline</b></h3>
+        <p>Here are photos I took during my last day in Chicago. It was on an early morning run near Lake Michigan!</p>
+
+        <div class="image-row">
+            <div class="image-container">
+                <img src="assets/source/city1.jpeg" alt="The Chicago Theater" />
+                <p class="caption">City 1</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/results/blended_city.jpg" alt="The Chicago Theater" />
+                <p class="caption">Chicago Skyline Mosaic</p>
+            </div>
+
+            <div class="image-container">
+                <img src="assets/source/city2.jpeg" alt="The Chicago Theater" />
+                <p class="caption">City 2</p>
+            </div>
+        </div>
+
+        <hr>
+        <h2 align="middle">Reflection</h2>
+        <p>I learned a lot in this project! It was really cool to see the history behind how panoramas are generated, and it gives me a greater appreciation for the work that has been put into the technology I use today. At first, I had trouble with my images due to mis-matched center of projections, but once I fixed those bugs, it was very exciting to see my mosaics come together. I previously worked with homographies in my research, but implementing it myself made me understand how they worked a lot more. I have new ideas on how to use homographies for rectifying a license plate collection that I have!</p>
+
+        <p>In Part B, what I found interesting was how the quality of your image greatly affects your auto-generated points. For example, I kept getting poorly stitched images only to realize that it was because I was capturing a dynamic scene. My algorithm was picking up corners that were moving. Thus, I was aligning to moving targets rather than stationary targets.</p>
     </article>
 </body>
 </html>
