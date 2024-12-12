@@ -1,0 +1,385 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <style>
+        body {
+            padding: 100px;
+            width: 1000px;
+            margin: auto;
+            text-align: left;
+            font-weight: 300;
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+            color: rgb(55, 53, 47);
+        }
+
+        #desc p {
+          font-size: 12px;
+          text-align: center;
+          padding-right: 20px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-weight: bold;
+        }
+
+        table {
+            margin-left: 3vw;
+        }
+
+        div.padded {
+            padding-top: 0px;
+            padding-right: 100px;
+            padding-bottom: 0.25in;
+            padding-left: 100px;
+        }
+
+        .bold-italic {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .image-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+            flex-basis: 20%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .caption {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #555;
+            text-align: center;
+        }
+
+        .sans {
+            font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        .code {
+            font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace;
+        }
+
+        .serif {
+            font-family: Lyon-Text, Georgia, ui-serif, serif;
+        }
+
+        .mono {
+            font-family: iawriter-mono, Nitti, Menlo, Courier, monospace;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(4, 150px);
+            grid-gap: 10px;
+            justify-content: center;
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: auto;
+        }
+
+        .grid-container-smol {
+            display: grid;
+            grid-template-columns: repeat(8, 100px);
+            grid-gap: 10px;
+            justify-content: center;
+        }
+
+        .flip-vertical {
+            transform: scaleY(-1);
+        }
+    </style>
+    <title>Clara | CS 180 Final Projects</title>
+    <meta http-equiv="content-type" name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body>
+    <div align="center" style="margin:0; padding:0; display: flex;"></div>
+
+    <article class="sans">
+        <br />
+        <h1 align="middle">CS180: Introduction to Computer Vision & Computation Photography</h1>
+        <h1 align="middle">Final Project</h1>
+        <h3 align="middle">Clara Hung</h2>
+        <p>For my final project, I decided to choose two really classic projects: <b>Light Field Camera</b> and <b>High Dynamic Range Imaging</b>.</p>
+
+        <hr>
+        <h1 align="middle" class="bold-italic">Final Project 1: Light Field (LF) Camera</h3>
+
+        <h2 align="middle">Project Overview</h2>
+        <p>The Light Field Camera was first demonstrated in <a href="http://graphics.stanford.edu/papers/lfcamera/lfcamera-150dpi.pdf">this paper</a> by our very own Prof. Ren Ng et al. They demonstrated that capturing images over a plane orthogonal to the optical axis, in this case, along the image/sensor plane, allows one to create complex effects using very simple processing. Our goal is to achieve some of these effects using real LF data!</p>
+
+        <h2 align="middle">Deliverable 1: Depth Refocusing</h2>
+        <p>From the theory in the paper, we can recover computational depth refocusing of the same scene from sub-aperture LF data. This works because objects at different depths vary their position differently when captured from different microlenses. Objects at infinity or far away don't change their position by much when captured from different microlenses, whereas objects closeby vary their position significantly. If we average all the sub-aperture images in the grid without any shifting, we will recover an image that is sharp around far-away objects but blurry around nearby ones. However, if we shift each image according to its microlens location and then average, we will be able to focus on objects at different depths. When we shift, we will need to shift relative to the "center" of the image. This is evident in Equation 6 in the paper.</p>
+
+        <p>The depth refocusing algorithm follows these steps:</p>
+
+        <ol>
+            <li>Extract sub-aperture positional information from filename.</li>
+            <li>Determine the position of the "center" microlens. Given that we have a 17x17 microlens array, we choose microlens (8, 8) as our center.</li>
+            <li>For each sub-aperture image, calculate the displacement from the center microlens.</li>
+            <li>To produce shift offsets, scale these distances by an arbitrary fudge factor (call it c), which will produce our shifted offsets. Varying c will give us different depths. Note: must negate the y-direction shift due to numpy processing.</li>
+            <li>Shift each sub-aperture image by the calculated shift offsets.</li>
+            <li>Average all the shifted images together.</li>
+            <li>Account for correct normalization.</li>
+        </ol>
+
+    <h3 align="middle">Results</h3>
+    <p><b>Eucalyptus Flowers:</b> Generated using C-values evenly spaced between (-1, 3)</p>
+
+    <div class="image-container">
+        <img src="./assets/shift_and_add_0.gif" alt="Eucalyptus Flowers Gif" />
+        <p class="caption">Eucalyptus Flowers</p>
+    </div>
+
+    <p><b>The St*****d Bunny:</b> Generated using C-values evenly spaced between (0, 3)</p>
+
+    <div class="image-container">
+        <img src="./assets/shift_and_add_3.gif" alt="Gif" />
+        <p class="caption">The St*****d Bunny</p>
+    </div>
+
+    <p><b>Chess:</b> Generated using C-values evenly spaced between (-3, 3)</p>
+
+    <div class="image-container">
+        <img src="./assets/shift_and_add_4.gif" alt="Gif" />
+        <p class="caption">Chess</p>
+    </div>
+
+    <p><b>Treasure Chest:</b> Generated using C-values evenly spaced between (-3, 3)</p>
+
+    <div class="image-container">
+        <img src="./assets/shift_and_add_5.gif" alt="Gif" />
+        <p class="caption">Treasure Chest</p>
+    </div>
+
+
+    <h2 align="middle">Deliverable 2: Aperture Adjustment</h2>
+    <p>Similar to the way we changed depth of field from shifting, adding, and averaging, we can change the aperture of the image by averaging images sampled over this grid that is orthogonal to the optical axis. This mimics a camera with a much larger aperture and is similar to how large telescope arrays work. If we use fewer images, we mimic a camera with a smaller aperture.</p>
+
+    <p>Our algorithm is very similar to the depth refocusing algorithm with a slight tweak: we define an aperture threshold, which is the maximum radius from the center from which we will take images to average. Thus, if we define our aperture threshold to be large, we will average over many images and create a larger aperture, or a shallow depth of field. Rather than changing the C value, we keep it constant. Below are some results!</p>
+
+    <h3 align="middle">Results</h3>
+
+    <p><b>Eucalyptus Flowers:</b> Generated using aperture threshold ranges (0, 10) and c=2.5</p>
+    <div class="image-container">
+        <img src="./assets/apertures_0.gif" alt="Eucalyptus Flowers Gif" />
+        <p class="caption">Eucalyptus Flowers</p>
+    </div>
+
+    <p><b>The St*****d Bunny:</b> Generated using aperture threshold ranges (0, 10) and c=2.5</p>
+    <div class="image-container">
+        <img src="./assets/apertures_3.gif" alt="The St*****d Bunny Gif" />
+        <p class="caption">The St*****d Bunny</p>
+    </div>
+
+    <p><b>Chess:</b> Generated using aperture threshold ranges (0, 10) and c=2.5</p>
+    <div class="image-container">
+        <img src="./assets/apertures_4.gif" alt="Chess Gif" />
+        <p class="caption">Chess</p>
+    </div>
+
+    <p><b>Treasure Chest:</b> Generated using aperture threshold ranges (0, 10) and c=3</p>
+    <div class="image-container">
+        <img src="./assets/apertures_5.gif" alt="Treasure Chest Gif" />
+        <p class="caption">Treasure Chest</p>
+    </div>
+
+    <hr>
+
+    <h1 align="middle" class="bold-italic">Final Project 2: High Dynamic Range (HDR) Imaging</h3>
+
+    <h2 align="middle">Project Overview</h2>
+    <p>This project was ripped from <a href="https://cs.brown.edu/courses/cs129/2012/asgn/proj5/">Brown University's CS129 Project 5</a>. Most cameras are unable to capture the full dynamic range of real life. Taking an image is a lossy process, and so is seeing with our own two eyes. We want to see if we can recover more of this dynamic range by combining information from multiple different exposures of the same scene to acquire a single HDR radiance map. We will then use this radiance map and conert it to an image that we are comfortable with displaying through tone-mapping.</p>
+
+    <h2 align="middle">Deliverable 1: Recover an HDR Radiance Map</h2>
+    <p>We will be following the procedure outlined in <a href="https://www.pauldebevec.com/Research/HDR/debevec-siggraph97.pdf">Debevec and Malik 1997's Siggraph paper</a> where they recover HDR from LDR. Fun fact: Prof. Malik is a Berkeley Prof! Go bears!!</p>
+
+    <p>We follow the derivation of our equations closely with Sections 2.1 and 2.2 in the paper.</p>
+    <ul>
+        <li>For an image (j\), the observed pixel value \(Z_{ij}\) for pixel \(i\) is a function of <b>unknown</b> radiance \(E_i\) at pixel \(i\) and <b>known</b> exposure duration of the image \(\Delta t_j\), i.e. \(Z_{ij}=f(E_i*\Delta t_j)\).</li>
+        <li>We solve for the inverse of \(f\): \(g=ln(f^{-1})\), which maps from pixel values (0-255) to the log of the exposure values: \[g(Z_{ij})=ln(E_i)+ln(t_j)\].</li>
+        <li>We can only recover \(g\) up to a scale factor, and while we don't know \(g\) or the pixel radiance,  we know that the scene is static, so we know that these values must be constant.</li>
+        <li>To solve for \(g\), we impose a couple of constraints such that we can construct and solve for a system of linear equations \(Ax=b\).</li>
+            <ul>
+                <li>We assume \(g\) to be smooth, monotomic, which allows us to add a constraint that penalizes it's second derivative term. Thus, we can construct this second derivative using finite differences: 
+                    \[g''=(g(x-1)-g(x))-(g(x)-g(x+1))=g(x-1)+g(x+1)-2*g(x)\]
+                </li>
+                <li>We add a regularization term to get: \[\lambda[g(x-1)w(x-1) + g(x+1)x(i+1) - 2g(x)w(x)] = 0\]</li>
+            </ul>
+        <li>Solve for \(g\) in the overdetermined problem using least squares.</li>
+        <li>Compute the radiance map for each pixel, using a weighting function to get better results: \[ln E_i=\frac{\Sigma_{j=1}^{P}w(Z_{ij})(g(Z_{ij})-\ln\Delta t_{j})}{\Sigma_{j=1}^{P}w(Z_{ij})}\] (equation 6 from the paper)</li>
+    </ul>
+
+    <p>In reality though, I translated the Matlab implementation of this to Python, using the figure they provide in Appendix A. Using the provided starter code, I generated figures for the Chapel test image.</p>
+
+    <h3 align="middle">Results</h3>
+    
+    <p><b>Estimated \(g\)</b></p>
+    <div class="image-container">
+        <img src="./assets/plot_g_chapel.png" alt="Estimated g" />
+        <p class="caption">Estimated \(g\)</p>
+    </div>
+
+    <p><b>Recovered radiance map</b></p>
+    <div class="image-container">
+        <img src="./assets/rad_map_chapel.png" alt="Recovered radiance map" />
+        <p class="caption">Recovered radiance map</p>
+    </div>
+
+    <h2 align="middle">Deliverable 2: Tone Mapping</h2>
+    <p><b>Global Tone Mapping:</b> We first implement a global tone-mapping method using \(\frac{L}{1 + L}\) where \(L\) is our HDR radiance map.</p>
+    
+    <p>We will then implement a local tone-mapping operation using a simplified version of Durand 2002's <a href="http://people.csail.mit.edu/fredo/PUBLI/Siggraph2002/DurandBilateral.pdf"><i>Fast Bilateral Filtering</i></a> paper. The algorithm, with the HDR Radiance Map as input, is as follows:</p>
+
+    <ol>
+        <li>Compute intensity by averaging all the color channels.</li>
+        <li>Compute the chorminance channels by dividing each channel by the intensity: \((\frac{R}{I}, \frac{G}{I}, \frac{B}{I})\)</li>
+        <li>Compute the log intensity: \(L = \log_2(I)\)</li>
+            <ul>
+                <li>Note: Zero values in the HDR image will cause problems. Add a small value to eliminate numerical instability.</li>
+            </ul>
+        <li>Compute the bilateral filter of the log intensity: \(B = \text{bilateralFilter}(L)\)</li>
+        <li> Compute the detail layer: \(D = L - B\)</li>
+        <li>Apply an offset and scale to base: \(B' = (B - o) * s\)
+            <ul>
+                <li>Note: let \(o = max(B)\). We want the maximum intensity of the base to be 1.</li>
+                <li>Note: Scale should be set such that the output of the base has \(n\) stops of dynamic range, that is: \(\frac{n}{max(B) - min(B)}\). For me, I chose \(n = 4\)</li>
+            </ul>
+        </li>
+        <li>Reconstruct the log intensity: \(O = 2^{B' + D}\)</li>
+        <li>Reconstruct the colors: \(R', G', B' = O * (\frac{R}{I}, \frac{G}{I}, \frac{B}{I})\)</li>
+        <li>Apply gamma compression, that is: \((\text{hdr radiance map})^\gamma\), otherwise the result will look too dark. The spec recommended \(\gamma = 0.5\)</li>
+    </ol>
+
+    <h3 align="middle">Results</h3>
+    <p><b>Comparison of all three tone-mapping methods:</b></p>
+
+    <div class="image-container">
+        <img src="./assets/tone_map_chapel.png" alt="Tone Mapping" />
+        <p class="caption">Tone Mapping</p>
+    </div>
+
+    <h3 align="middle">Other Results</h3>
+
+    <p><b>Estimated \(g\)</b></p>
+    <div class="image-container">
+        <img src="./assets/plot_g_0.png" alt="Estimated g" />
+        <p class="caption">Estimated \(g\)</p>
+    </div>
+
+    <p><b>Recovered radiance map</b></p>
+    <div class="image-container">
+        <img src="./assets/rad_map_0.png" alt="Recovered radiance map" />
+        <p class="caption">Recovered radiance map</p>
+    </div>
+
+    <p><b>Comparison of all three tone-mapping methods:</b></p>
+    <div class="image-container">
+        <img src="./assets/all_figs_0.png" alt="Tone Mapping" />
+        <p class="caption">Tone Mapping</p>
+    </div>
+
+    <h3 align="middle">Bells and Whistles</h3>
+    <p>For my bells and whistles, I decided to try HDR for my own photos and implement image alignment! To get my own images to work, I had to do the following changes to my code:</p>
+
+    <ul>
+        <li>I had to use the image metadata to rename them according to their exposure. That is, if an image had an exposure of 1/180, I would rename it to 1_180.jpeg.</li>
+        <li>I ran into an issue of my HDR radiance map being much greater than 1. It would be clipped and I would get a completely white image. To fix this, I implemented the following normalization scheme whenever this issue came up: 
+            <code>
+                rad_map -= rad_map.min();
+                rad_map /= rad_map.max()
+            </code>
+        </li>
+    </ul>
+
+    <p><b>Trees outside of the physics building:</b></p>
+
+    <p><b>Estimated \(g\)</b></p>
+    <div class="image-container">
+        <img src="./assets/plot_g_trees.png" alt="Estimated g" />
+        <p class="caption">Estimated \(g\)</p>
+    </div>
+
+    <p><b>Recovered radiance map</b></p>
+    <div class="image-container">
+        <img src="./assets/rad_map_trees.png" alt="Recovered radiance map" />
+        <p class="caption">Recovered radiance map</p>
+    </div>
+
+    <p><b>Comparison of all three tone-mapping methods:</b></p>
+    <div class="image-container">
+        <img src="./assets/all_figs_trees.png" alt="Tone Mapping" />
+        <p class="caption">Tone Mapping</p>
+    </div>
+
+    <p><b>Cool store on University Ave:</b> This one looks quite bad because my hand was shaking as I was adjusting the exposure, and the scene was slightly dynamic. Could be fixed with image alignment.</p>
+
+    <p><b>Estimated \(g\)</b></p>
+    <div class="image-container">
+        <img src="./assets/plot_g_capture.png" alt="Estimated g" />
+        <p class="caption">Estimated \(g\)</p>
+    </div>
+
+    <p><b>Recovered radiance map</b></p>
+    <div class="image-container">
+        <img src="./assets/rad_map_capture.png" alt="Recovered radiance map" />
+        <p class="caption">Recovered radiance map</p>
+    </div>
+
+    <p><b>Comparison of all three tone-mapping methods:</b></p>
+    <div class="image-container">
+        <img src="./assets/all_figs_capture.png" alt="Tone Mapping" />
+        <p class="caption">Tone Mapping</p>
+    </div>
+
+    <p>For image alignment, I copied my phase correlation code from Project 1. Note that the alignment isn't perfect because I actually only aligned based on the green channel (since our cameras are more sensitve to green). Below are some before and after photos.</p>
+
+    <p><b>Before:</b></p>
+    <div class="image-container">
+        <img src="./assets/garden_before.png" alt="Before" height="1000px"/>
+        <p class="caption">Before</p>
+    </div>
+    <p><b>After:</b></p>
+    <div class="image-container">
+        <img src="./assets/garden_after.png" alt="Before" />
+        <p class="caption">After</p>
+    </div>
+
+    <p><b>Before:</b></p>
+    <div class="image-container">
+        <img src="./assets/capture_before.png" alt="Before" height="1000px"/>
+        <p class="caption">Before</p>
+    </div>
+    <p><b>After:</b></p>
+    <div class="image-container">
+        <img src="./assets/capture_after.png" alt="Before" />
+        <p class="caption">After</p>
+    </div>
+
+    </article>
+</body>
+</html>
